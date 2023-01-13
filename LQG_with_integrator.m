@@ -1,26 +1,32 @@
 clc
-load('dataset.mat');
-J = get_linearization();
+
+load('dataset.mat');    % dataset loading
+J = get_linearization();    % matrices of the linearized system
 s = tf('s');
-G = J.C*(s*eye(6)-J.A)^(-1)*J.B
+G = J.C*(s*eye(6)-J.A)^(-1)*J.B;    % transfer function
+
 % Model dimensions:
-p = size(J.C,1) % no. of outputs (y)
-[n,m] = size(J.B) % no. of states and inputs (u)
+p = size(J.C,1); % no. of outputs (y)
+[n,m] = size(J.B); % no. of states and inputs (u)
 Znp=zeros(n,p); Zpn=zeros(p,n);
 Znn=zeros(n,n); Zpp=zeros(p,p);
 
 % 1) Design state feedback regulator
+% augment plant with integrator:
 A = [J.A Znp;-J.C Zpp]; 
-B = [J.B;-J.D]; % augment plant with integrator
+B = [J.B;-J.D]; 
 C = [J.C Zpp];
+Q = [Znn Znp;Zpn eye(p,p)]; % weight on integrated error
+R = eye(m); % input weight
 
-Q=[Znn Znp;Zpn eye(p,p)]; % weight on integrated error
-R=eye(m); % input weight
-rank(ctrb(A,B))
-rank(obsv(A,C))
-eig(A)
-[Ao, Bo, Co] = obsvf(A,B,C)
-[Abar,Bbar,Cbar] = ctrbf(A,B,C)
+% % Controllo delle proprietà strutturali del sistema aumentato
+% Gi = C*(s*eye(10)-A)^(-1)*B; % sistema di trasferimento del sistema aumentato
+% rank(ctrb(A,B));    % rango della matrice di raggiungibilità
+% rank(obsv(A,C));    % rango della matrice di osservabilità
+% eig(A); % autovalori della matrice A del sistema aumentato
+% [Ao, Bo, Co] = obsvf(A,B,C);    % sistema in forma standard di osservabilità
+% [Abar,Bbar,Cbar,T] = ctrbf(A,B,C) % sistema in forma standard di raggiungibilità
+
 Kr=lqr(A,B,Q,R); % LQR
 Krp=Kr(1:m,1:n); % state feedback
 Kri=Kr(1:m,n+1:n+p); % integrator feedback
@@ -31,11 +37,5 @@ W = log_vars.W; % process noise weight
 V = log_vars.V; % measurement noise weight
 Estss = ss(J.A,[J.B Bnoise],J.C,0); 
 [Kess, Ke] = kalman(Estss,W,V); % Kalman filter
-%Ke = lqe(J.A,Bnoise,J.C,W,V); % Kalman filter gain
-% 
-% % 3) Form overall controller
-% Ac=[Zmm Zmn;-b*Kri a-b*Krp-Ke*c]; % integrator included
-% Bcr = [eye(m); Znm]; Bcy = [-eye(m); Ke];
-% Cc = [-Kri -Krp]; Dcr = Zmm; Dcy = Zmm;
-% Klqg2 = ss(Ac,[Bcr Bcy],Cc,[Dcr Dcy]); % Final 2 dof controller from [r y]' to u
-% Klqg = ss(Ac,-Bcy,Cc,-Dcy); % feedback part of controller from -y to u
+
+% Test simulation on simulink: model_lqg_int.slx

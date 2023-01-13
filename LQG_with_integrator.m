@@ -6,20 +6,21 @@ G = J.C*(s*eye(6)-J.A)^(-1)*J.B
 % Model dimensions:
 p = size(J.C,1) % no. of outputs (y)
 [n,m] = size(J.B) % no. of states and inputs (u)
-Znp=zeros(n,1); Zpn=zeros(1,n);
-Znn=zeros(n,n); Zpp=zeros(1,1);
+Znp=zeros(n,p); Zpn=zeros(p,n);
+Znn=zeros(n,n); Zpp=zeros(p,p);
 
 % 1) Design state feedback regulator
-A = [J.A Znp;-J.C(3,:) Zpp]; 
-B = [J.B;-J.D(3,:)]; % augment plant with integrator
-C = [J.C(3,:) Zpp];
-Q=[Znn Znp;Zpn eye(1,1)]; % weight on integrated error
-R=eye(m); % input weight
-rank(ctrb(A,B));
-rank(obsv(A,C));
+A = [J.A Znp;-J.C Zpp]; 
+B = [J.B;-J.D]; % augment plant with integrator
+C = [J.C Zpp];
+
+Q=[Znn Znp;Zpn 0.5.*eye(p,p)]; % weight on integrated error
+R=0.5.*eye(m); % input weight
+rank(ctrb(A,B))
+rank(obsv(A,C))
 eig(A)
-[Ao, Bo, Co] = obsvf(A,B,C);
-[Abar,Bbar,Cbar] = ctrbf(A,B,C);
+[Ao, Bo, Co] = obsvf(A,B,C)
+[Abar,Bbar,Cbar] = ctrbf(A,B,C)
 Kr=lqr(A,B,Q,R); % LQR
 Krp=Kr(1:m,1:n); % state feedback
 Kri=Kr(1:m,n+1:n+p); % integrator feedback

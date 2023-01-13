@@ -14,8 +14,8 @@ A = [J.A Znp;-J.C Zpp];
 B = [J.B;-J.D]; % augment plant with integrator
 C = [J.C Zpp];
 
-Q=[Znn Znp;Zpn 0.5.*eye(p,p)]; % weight on integrated error
-R=0.5.*eye(m); % input weight
+Q=[Znn Znp;Zpn eye(p,p)]; % weight on integrated error
+R=eye(m); % input weight
 rank(ctrb(A,B))
 rank(obsv(A,C))
 eig(A)
@@ -26,10 +26,10 @@ Krp=Kr(1:m,1:n); % state feedback
 Kri=Kr(1:m,n+1:n+p); % integrator feedback
 
 % 2) Design Kalman filter % don’t estimate integrator states
-Bnoise = eye(n); % process noise model (Gd)
+Bnoise = [0 0;0 0;0 0;1 0;0 0;0 1]; % process noise model (Gd)
 W = log_vars.W; % process noise weight
 V = log_vars.V; % measurement noise weight
-Estss = ss(J.A,[J.B Bnoise],J.C,[J.D zeros(4,6)]); 
+Estss = ss(J.A,[J.B Bnoise],J.C,0); 
 [Kess, Ke] = kalman(Estss,W,V); % Kalman filter
 %Ke = lqe(J.A,Bnoise,J.C,W,V); % Kalman filter gain
 % 

@@ -9,16 +9,16 @@ p = size(J.C,1) % no. of outputs (y)
 
 
 % 1) Design state feedback regulator
-Q=[eye(n)]; % weight on integrated error
+Q=eye(n); % weight on integrated error
 R=eye(m); % input weight
 Kr=lqr(J.A,J.B,Q,R); % optimal state-feedback regulator
 %Krp=Kr(1:m,1:n); % state feedback
 
 % 2) Design Kalman filter % don’t estimate integrator states
-Bnoise = eye(n); % process noise model (Gd)
+Bnoise = [0 0;0 0;0 0;1 0;0 0;0 1]; % process noise model (Gd)
 W = log_vars.W; % process noise weight
 V = log_vars.V; % measurement noise weight
-Estss = ss(J.A,[J.B Bnoise],J.C,[J.D zeros(4,6)]); 
+Estss = ss(J.A,[J.B Bnoise],J.C,0); 
 [Kess, Ke] = kalman(Estss,W,V); % Kalman filter
 %Ke = lqe(J.A,Bnoise,J.C,W,V); % Kalman filter gain
 

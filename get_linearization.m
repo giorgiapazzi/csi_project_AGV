@@ -32,7 +32,7 @@ function j_matrix = get_linearization()
     C = simplify(jacobian(h, X));
     D = simplify(jacobian(h, Tau));
     
-    x_eq = [0 pi 0 0];
+    x_eq = [0 1 0 0];
     tau_eq = [0 0];
     A = double(subs(A, [X(3);X(4);X(5);X(6);Tau(1);Tau(2)], [x_eq'; tau_eq']));
     B = double(subs(B, [X(3);X(4);X(5);X(6);Tau(1);Tau(2)], [x_eq'; tau_eq']));

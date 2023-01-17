@@ -1,56 +1,31 @@
-%% Nominal plant
+%% Nominal plant and controller
 close all
-s = tf('s');
-Jo = get_linearization_lqg();    % matrices of the linearized system
-A = Jo.A;
-B = Jo.B;
-C = Jo.C;
-D = Jo.D;
-SYS = ss(A,B,C,D);    % transfer function
-G = minreal(Gnom);
-
-
-%% Controller
 load('dataset');
+s = tf('s');
+sys = log_vars.sys;
+S = log_vars.S;
+T = log_vars.T;
 K = log_vars.K;
-
-
-
-[A B C D] = ssdata(K);
-% Ks = C*(s*eye(6)-A)^(-1)*B;
-% Ks = minreal(Ks);
-[num1,den1] = ss2tf(A,B,C,D,1);
-[num2,den2] = ss2tf(A,B,C,D,2);
-K1 = tf(num1(1,:),den1);
-K2 = tf(num1(2,:),den1);
-K3 = tf(num2(1,:),den2);
-K4 = tf(num2(2,:),den2);
-Kt = [K1 K3;K2 K4];
-Kt = minreal(Kt);
-
-S = inv(eye(2)+G*K);
-eig(S)
-T = S*G*K;
-autovalori = sigma(T);
-sigma(T)
+J = get_linearization_lqg();
+A_i = J.A_i;
+B_i = J.B_i;
+C = J.C;
+D = J.D;
+% autovalori = sigma(T);
+% sigma(T)
 omega = logspace(-1,6,302);
 %% Weighting filter for uncertainty modelling
-Wi = log_vars.Wi
-
-wP1 = makeweight(30,0.09,0.1);
-wP2 = makeweight(30,0.75,0.5);
-wP3 = makeweight(30,0.6,0.5);
-WP =  [wP1 0;0 wP3];
-
-Wu = eye(2);
+Wi = log_vars.Wi;
+WP = log_vars.WP;
+WU = log_vars.WU;
 
 %% Generalized plant P
-systemnames = 'G WP Wu Wi';
-inputvar = '[udel{2}; ref{2}; w{2}; u{2}]';
-outputvar = '[Wi ; WP ; Wu ; ref-G-w]';
-input_to_G = '[u+udel]';
-input_to_WP = '[G+w]';
-input_to_Wu = '[u]';
+systemnames = 'sys WP WU Wi';
+inputvar = '[udel{2}; ref{4}; u{2}]';
+outputvar = '[Wi ; WP ; WU ; ref-sys]';
+input_to_sys = '[u+udel]';
+input_to_WP = '[sys]';
+input_to_WU = '[u]';
 input_to_Wi = '[u]';
 sysoutname = 'P';
 cleanupsysic = 'yes';
@@ -65,16 +40,29 @@ Nf = frd(N,omega);
 Delta1 = ultidyn('Delta1',[1 1]);
 Delta2 = ultidyn('Delta2',[1 1]);
 Delta = blkdiag(Delta1,Delta2);
+Gp = C*(s*eye(5)-A_i)^(-1)*B_i;
+G_pinv = inv(sys'*sys)*sys';
+bodemag(usample(G_pinv*(Gp-Gp.NominalValue),100))
+sigma(G_pinv*(Gp-sys));
+hold on;
+sigma(Wi);
+
+%bodemag(sys_inv*tf(Gp-sys),'r'); hold on; bodemag(Wi,'b');
+%bodemag(usample(sys_inv*(Gp-sys),50),'r'); hold on; bodemag(Wi,'b');
 M = lft(Delta,N);
 Mf = frd(M,omega);
 
 % RS with mussv, rea
-Mrs = Nf(1:2,1:2);
-[mubnds,muinfo] = mussv(Mrs,[1 1 ; 1 1],'a');
+% M = N(1,1), per la robusta stabilità la norma infinito di M deve essere
+% minore di 1
+% N = lft(P,k) di dimensione 6x8
+Nrs = Nf(1:4,1:2);
+[mubnds,muinfo] = mussv(Nrs,[-1 0],'a');
 muRS = mubnds(:,1);
 [muRSinf,muRSw] = norm(muRS,inf);
-Nnp=Nf(5:6,5:6); % Picking out wP*Si
-[mubnds,muinfo]=mussv(Nnp,[1 1;1 1],'c');
+% per la Performance Nominale devo fare un controllo sulla N22
+Nnp=Nf(5:8,3:6); % Picking out wP*Si
+[mubnds,muinfo]=mussv(Nnp,[2 2],'c');
 muNP = mubnds(:,1);
 [muNPinf,muNSw]=norm(muNP,inf);
 % Mrp = Mf(5:6,5:6);

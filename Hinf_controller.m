@@ -11,6 +11,7 @@ Gnom = minreal(tf(SYS));
 [Anom Bnom Cnom Dnom] = ssdata(Gnom);
 sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 
+
 %Definizione dei parametri
 M = 2;
 AP = 2;
@@ -52,13 +53,20 @@ val_sing_max_T = val_sing_T(1,:);
 omega_T = logspace(-1,6,251);
 % sigma(S)
 log_vars.K = K;
+log_vars.sys = sys;
+log_vars.S = S;
+log_vars.T = T;
+log_vars.WP = WP;
+log_vars.WU = WU;
 
 %Plot
 figure(1);
-bodemag(val_sing_max_S); hold on; bodemag(1/WP);
+sigma(S); hold on; sigma(1/WP);
 figure(2);
 sigma(T); hold on; sigma(1/WT);
 figure(3);
+sigma(K*S); hold on; sigma(1/WU);
+figure(4);
 sigma(S,'b',K*S,'r',T,'g',gopt/WP,'b-.',ss(gopt/WU),'m-.',gopt/WT,'g-.',{1e-3,1e3})
 legend('S','KS','T','GAM/W1','GAM/W2','GAM/W3','Location','SouthWest');
 save('dataset','log_vars');

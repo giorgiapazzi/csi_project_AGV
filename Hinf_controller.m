@@ -43,13 +43,19 @@ WU = blkdiag(Wu,Wu);
 % Valori singolari
 K = khinf;
 S = inv(eye(4)+sys*K);
+val_sing_S = sigma(S);
+val_sing_max_S = val_sing_S(1,:);
+omega_S = logspace(-1,6,146);
 T = sys*K*S;
+val_sing_T = sigma(T);
+val_sing_max_T = val_sing_T(1,:);
+omega_T = logspace(-1,6,251);
 % sigma(S)
 log_vars.K = K;
 
 %Plot
 figure(1);
-sigma(S); hold on; sigma(1/WP);
+bodemag(val_sing_max_S); hold on; bodemag(1/WP);
 figure(2);
 sigma(T); hold on; sigma(1/WT);
 figure(3);

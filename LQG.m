@@ -1,7 +1,7 @@
 clc
 
 load('dataset.mat');    % dataset loading
-J = get_linearization_lqg();    % matrices of the linearized system
+J = get_linearization();    % matrices of the linearized system
 s = tf('s');
 G = J.C*(s*eye(5)-J.A)^(-1)*J.B;    % transfer function
 

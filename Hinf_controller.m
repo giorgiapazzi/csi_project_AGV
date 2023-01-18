@@ -1,7 +1,7 @@
 close all
 
 s = tf('s');
-Jo = get_linearization_lqg();    % matrices of the linearized system
+Jo = get_linearization();    % matrices of the linearized system
 A = Jo.A;
 B = Jo.B;
 C = Jo.C;
@@ -47,7 +47,7 @@ S = inv(eye(4)+sys*K);
 val_sing_S = sigma(S);
 val_sing_max_S = val_sing_S(1,:);
 omega_S = logspace(-1,6,146);
-T = sys*K*S;
+T = sys*K*S; %GK(I+GK)^-1
 val_sing_T = sigma(T);
 val_sing_max_T = val_sing_T(1,:);
 omega_T = logspace(-1,6,251);

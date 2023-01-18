@@ -1,4 +1,5 @@
 %% Nominal plant and controller
+global rp w_rp
 close all
 load('dataset');
 s = tf('s');
@@ -6,7 +7,7 @@ sys = log_vars.sys;
 S = log_vars.S;
 T = log_vars.T;
 K = log_vars.K;
-J = get_linearization_lqg();
+J = get_linearization();
 A_i = J.A_i;
 B_i = J.B_i;
 C = J.C;
@@ -15,14 +16,17 @@ D = J.D;
 % sigma(T)
 omega = logspace(-1,6,302);
 %% Weighting filter for uncertainty modelling
-Wi = log_vars.Wi;
+%wi = 10^2*1/(s)^5/(1+10^5*s)*(1+s*10^2)^6;
+rp_tau = w_rp/(rp);
+wi = rp_tau*rp*s/(1+rp*s);
+Wi = blkdiag(wi,wi);
 WP = log_vars.WP;
 WU = log_vars.WU;
 
-%% Generalized plant P
-systemnames = 'sys WP WU Wi';
-inputvar = '[udel{2}; ref{4}; u{2}]';
-outputvar = '[Wi ; WP ; WU ; ref-sys]';
+%% Generalized plant P with Wi, Wu and Wp
+systemnames = 'sys WP Wi';
+inputvar = '[udel{2}; w{4}; u{2}]';
+outputvar = '[Wi ; WP ; -w-sys]';
 input_to_sys = '[u+udel]';
 input_to_WP = '[sys]';
 input_to_WU = '[u]';
@@ -30,7 +34,7 @@ input_to_Wi = '[u]';
 sysoutname = 'P';
 cleanupsysic = 'yes';
 sysic;
-
+P = minreal(ss(P));
 
 %% MDelta system
 N = lft(P,K);
@@ -41,38 +45,41 @@ Delta1 = ultidyn('Delta1',[1 1]);
 Delta2 = ultidyn('Delta2',[1 1]);
 Delta = blkdiag(Delta1,Delta2);
 Gp = C*(s*eye(5)-A_i)^(-1)*B_i;
-G_pinv = inv(sys'*sys)*sys';
-bodemag(usample(G_pinv*(Gp-Gp.NominalValue),100))
-sigma(G_pinv*(Gp-sys));
-hold on;
-sigma(Wi);
+Gpp = sys*(eye(2)+Wi*Delta);
+sigma(Gpp, 'r'); hold on; sigma(sys, 'b');
+% G_pinv = inv(sys'*sys)*sys';
+% bodemag(usample(G_pinv*(Gp-Gp.NominalValue),100))
+% sigma(G_pinv*(Gp-sys));
+% hold on;
+% sigma(Wi);
 
 %bodemag(sys_inv*tf(Gp-sys),'r'); hold on; bodemag(Wi,'b');
 %bodemag(usample(sys_inv*(Gp-sys),50),'r'); hold on; bodemag(Wi,'b');
 M = lft(Delta,N);
 Mf = frd(M,omega);
 
-% RS with mussv, rea
+%% RS with mussv, rea
+
+%osservo autovalori di N per capire se è NS
+eig(N)
 % M = N(1,1), per la robusta stabilità la norma infinito di M deve essere
 % minore di 1
-% N = lft(P,k) di dimensione 6x8
-Nrs = Nf(1:4,1:2);
-[mubnds,muinfo] = mussv(Nrs,[-1 0],'a');
+Nrs = Nf(1:2,1:2);
+[mubnds,muinfo] = mussv(Nrs,[1 1; 1 1],'a');
 muRS = mubnds(:,1);
 [muRSinf,muRSw] = norm(muRS,inf);
-% per la Performance Nominale devo fare un controllo sulla N22
-Nnp=Nf(5:8,3:6); % Picking out wP*Si
-[mubnds,muinfo]=mussv(Nnp,[2 2],'c');
+%per la Performance Nominale devo fare un controllo sulla N22
+Nnp=Nf(3:6,3:6); % Picking out wP*Si
+[mubnds,muinfo]=mussv(Nnp,[1 1; 1 1; 1 1; 1 1],'c');
 muNP = mubnds(:,1);
 [muNPinf,muNSw]=norm(muNP,inf);
-% Mrp = Mf(5:6,5:6);
+
 
 %% plots
 
-
-%bodemag(mubnds(:,1),'r-'); hold on; bodemag(1/Wi(1,1),'g'); hold on; bodemag(frd(autovalori(1,:),omega),'b')
-% figure(1);
-% bodemag(mubnds(:,2),'r-'); hold on; bodemag(1/Wi(2,2),'g'); hold on; bodemag(frd(autovalori(1,:),omega),'b')
+figure(1);
+sigma(mubnds,'r-'); hold on; sigma(1/Wi,'g'); 
+bodemag(mubnds(:,2),'r-'); hold on; bodemag(1/Wi(2,2),'g'); hold on; bodemag(frd(autovalori(1,:),omega),'b')
 % figure(3);
 %bodemag(mubnds,'r-'); hold on; bodemag(1/Wi,'g');
 %legend('mu(T)', '1/|wp|', '$$\bar{\sigma}(T)$$', 'Interpreter','latex')

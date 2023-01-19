@@ -46,7 +46,7 @@ function j_matrix = get_linearization_lqg()
 %     A_i = simplify(jacobian(f_cont_i, X));
 %     B_i = simplify(jacobian(f_cont_i, Tau));
 
-    x_eq = [0 0 1 0 0];
+    x_eq = [0 0 -1 0 0];
     tau_eq = [0 0];
     A = double(subs(A, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));                                                                                                                                                                                            
     A_i = [0, (rp_i), 0, 0, 0;

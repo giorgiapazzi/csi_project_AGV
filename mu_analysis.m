@@ -17,8 +17,26 @@ D = J.D;
 omega = logspace(-1,6,302);
 %% Weighting filter for uncertainty modelling
 %wi = 10^2*1/(s)^5/(1+10^5*s)*(1+s*10^2)^6;
+Gp = C*(s*eye(5)-A_i)^(-1)*B_i; %G incerta
+G_inv = inv(sys'*sys)*sys';
+sigma(G_inv*(Gp-sys));
+%[freq,response] = ginput(5);
+freq = [1.40494020600125e-14
+6.69677303868978e-07
+0.249740006959577
+2368.13236993714
+67387776523264.6];
+
+response = [849.322493224932
+504.607046070460
+10.2981029810296
+-93.7669376693768
+-76.4227642276426];
+system = frd(10.^(response/20),freq');
+wi = fitmagfrd(system,4,0);
+wi = tf(wi);
 rp_tau = w_rp/(rp);
-wi = rp_tau*rp*s/(1+rp*s);
+%wi = rp_tau*rp*s/(1+rp*s);
 Wi = blkdiag(wi,wi);
 WP = log_vars.WP;
 WU = log_vars.WU;
@@ -62,7 +80,6 @@ Nf = frd(N,omega);
 Delta1 = ultidyn('Delta1',[1 1]);
 Delta2 = ultidyn('Delta2',[1 1]);
 Delta = blkdiag(Delta1,Delta2);
-Gp = C*(s*eye(5)-A_i)^(-1)*B_i;
 Gpp = sys*(eye(2)+Wi*Delta);
 sigma(Gpp, 'r'); hold on; sigma(sys, 'b');
 % G_pinv = inv(sys'*sys)*sys';

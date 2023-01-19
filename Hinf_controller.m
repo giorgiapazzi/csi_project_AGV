@@ -59,7 +59,7 @@ sigma(S); hold on; sigma(1/WP);
 % figure(4);
 % sigma(S,'b',K*S,'r',T,'g',gopt/WP,'b-.',ss(gopt/WU),'m-.',gopt/WT,'g-.',{1e-3,1e3})
 % legend('S','KS','T','GAM/W1','GAM/W2','GAM/W3','Location','SouthWest');
-% save('dataset','log_vars');
+save('dataset','log_vars');
 
 
 

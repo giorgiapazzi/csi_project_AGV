@@ -49,6 +49,10 @@ sysoutname = 'P';
 cleanupsysic = 'yes';
 sysic;
 P = minreal(ss(P));
+% 
+% nmeas=4;
+% nu=2;
+% [K,CL,gamma] = hinfsyn(P,nmeas,nu);
 
 %% MDelta system
 N = lft(P,K);
@@ -82,12 +86,20 @@ Nrs = Nf(1:2,1:2);
 [mubnds,muinfo] = mussv(Nrs,[1 1; 1 1],'a');
 muRS = mubnds(:,1);
 [muRSinf,muRSw] = norm(muRS,inf);
-%per la Performance Nominale devo fare un controllo sulla N22
-% Nnp=Nf(3:6,3:6); % Picking out wP*Si
-% [mubnds,muinfo]=mussv(Nnp,[1 1; 1 1; 1 1; 1 1],'c');
-% muNP = mubnds(:,1);
-% [muNPinf,muNSw]=norm(muNP,inf);
 
+%per la Performance Nominale devo fare un controllo sulla N22
+% DELTAP è una matrice complessa piena delle stesse dimensioni
+%di F' dove F è lft(N,Delta)=M;
+%Quindi essendo M una matrice 6x4 M' è 4x6
+Nnp=Nf(3:8,3:6); % Picking out wP*Si
+[mubnds,muinfo]=mussv(Nnp,[4 6],'a');
+muNP = mubnds(:,1);
+[muNPinf,muNSw]=norm(muNP,inf);
+
+%Performance robusta
+[mubnds,muinfo]=mussv(Nf,[1 1;1 1;4 6],'a');
+muRP = mubnds(:,1);
+[muRPinf,muNSw]=norm(muRP,inf);
 
 %% plots
 

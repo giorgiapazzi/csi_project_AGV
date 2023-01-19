@@ -1,8 +1,12 @@
 clc
 
 load('dataset.mat');    % dataset loading
-J = get_linearization();    % matrices of the linearized system
+J = get_linearization();% matrices of the linearized system
 s = tf('s');
+A = J.A;
+B = J.B;
+C = J.C;
+D = J.D;
 G = J.C*(s*eye(5)-J.A)^(-1)*J.B;    % transfer function
 
 % Model dimensions:
@@ -22,4 +26,7 @@ V = log_vars.V; % measurement noise weight
 Estss = ss(J.A,[J.B Bnoise],J.C,0); 
 [Kess, Ke] = kalman(Estss,W,V); % Kalman filter
 
+K_lqg =[A-B*Kr-Ke*C, Ke;
+        -Kr, zeros(2,4)];
+K_LQG =ss(A-B*Kr-Ke*C,Ke,-Kr,zeros(2,4));
 % Test simulation on simulink: model.slx

@@ -19,7 +19,7 @@ wBp = 0.01;
 wBt = 1;
 % Matrici di peso
 Wu = s/(s+wBt);
-wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2;
+wP = 0.1*(s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2;
 wT = s/(s+wBt);
 % wP = makeweight(60,9e-2,0.1);
 % wP2 = makeweight(250,7.5e-6,0.1);
@@ -38,7 +38,8 @@ WU = blkdiag(Wu,Wu);
 % WP =  blkdiag(wP1, wP2, wP3, wP4);
 
 % Controllore H inf
-[khinf,ghinf,gopt] = mixsyn(sys,WP,WU,WT);
+[khinf,ghinf,gopt] = mixsyn(sys,WP,[],WT);
+[Ahinf Bhinf Chinf Dhinf] = ssdata(khinf);
 
 
 % Valori singolari

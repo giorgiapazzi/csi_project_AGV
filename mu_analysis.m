@@ -24,9 +24,23 @@ WP = log_vars.WP;
 WU = log_vars.WU;
 
 %% Generalized plant P with Wi, Wu and Wp
-systemnames = 'sys WP Wi';
+
+% systemnames = 'sys WP';
+% inputvar = '[w(4) ; u(2)]';
+% outputvar = '[WP; -sys-w]';
+% input_to_sys= '[u]';
+% input_to_WP = '[sys+w]'; 
+% sysoutname = 'P'; cleanupsysic = 'yes';
+% sysic;
+% 
+% nmeas=4;
+% nu=2;
+% [K,CL,gamma] = hinfsyn(P,nmeas,nu);
+
+
+systemnames = 'sys WP WU Wi';
 inputvar = '[udel{2}; w{4}; u{2}]';
-outputvar = '[Wi ; WP ; -w-sys]';
+outputvar = '[Wi ;WU; WP ; -w-sys]';
 input_to_sys = '[u+udel]';
 input_to_WP = '[sys]';
 input_to_WU = '[u]';
@@ -69,10 +83,10 @@ Nrs = Nf(1:2,1:2);
 muRS = mubnds(:,1);
 [muRSinf,muRSw] = norm(muRS,inf);
 %per la Performance Nominale devo fare un controllo sulla N22
-Nnp=Nf(3:6,3:6); % Picking out wP*Si
-[mubnds,muinfo]=mussv(Nnp,[1 1; 1 1; 1 1; 1 1],'c');
-muNP = mubnds(:,1);
-[muNPinf,muNSw]=norm(muNP,inf);
+% Nnp=Nf(3:6,3:6); % Picking out wP*Si
+% [mubnds,muinfo]=mussv(Nnp,[1 1; 1 1; 1 1; 1 1],'c');
+% muNP = mubnds(:,1);
+% [muNPinf,muNSw]=norm(muNP,inf);
 
 
 %% plots

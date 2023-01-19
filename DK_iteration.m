@@ -41,13 +41,17 @@ sysoutname = 'P';
 cleanupsysic = 'yes';
 sysic;
 P = minreal(ss(P));
-
-%
-%% Initialize.
-%
+Delta = ultidyn('Delta',[2 2]);
+%% DK-iteration tramite musyn
+% Il comando musyn prende la mixed-mu M in ingresso, sapendo che M = lft(delta,N)
+% dove qui al posto della N si ha la P 
+nmeas = 4; nu = 2;  %
 omega = logspace(-3,3,61);
-blk = [1 1; 1 1; 1 1; 1 1; 1 1; 1 1];
-nmeas = 4; nu = 2; d0 = 1; 
+M=lft(Delta,P);
+opts=musynOptions('Display','full','MaxIter',15,'TolPerf',0.001,'FrequencyGrid',omega)
+[K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
+%% DK Iteration manuale (non funziona)
+d0 = 1;
 %delta in questo caso è diag{delta_i, delta_p}
 %delta_i è un blocco diagonale 2x2 ed è per questo che ho [1 1; 1 1];
 %delta_P invece è una matrice piena (non diagonale)

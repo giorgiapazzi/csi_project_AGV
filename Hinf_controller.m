@@ -14,14 +14,17 @@ sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 
 %Definizione dei parametri
 M = 2;
-AP = 3;
-wBp = 1;
+%AP = 3;
+AP = 10^-2;
+%wBp = 1;
+wBp = 10^-2;
 wBt = 1;
+wBu = 1;
 % Matrici di peso
-Wu = s/(s+wBt);
+Wu = s/(s+wBu);
 wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2;
 %wP = (s/M+wBp)/(s+wBp*AP);
-wT = s/(s+wBt);
+%wT = s/(s+wBt);
 WP = blkdiag(wP,wP,wP,wP);
 WT = blkdiag(wT,wT,wT,wT);
 WU = blkdiag(Wu,Wu);
@@ -60,9 +63,6 @@ sigma(S); hold on; sigma(1/WP);
 % sigma(S,'b',K*S,'r',T,'g',gopt/WP,'b-.',ss(gopt/WU),'m-.',gopt/WT,'g-.',{1e-3,1e3})
 % legend('S','KS','T','GAM/W1','GAM/W2','GAM/W3','Location','SouthWest');
 save('dataset','log_vars');
-
-
-
 
 
 

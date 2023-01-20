@@ -91,18 +91,18 @@ G_inv = inv(sys'*sys)*sys';
 %wi il cui valore singolare sta sotto ai valori singolari di G_inv*(Gp-sys)
 %muRSinf = 0.0028; muNPinf = 0.0729; muRPinf = 0.0782;
 %Funziona con la dk
-rp_tau = w_rp/(rp);
-wi = rp_tau*rp*s/(1+rp*s);
-sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
+%rp_tau = w_rp/(rp);
+%wi = rp_tau*rp*s/(1+rp*s);
+%sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 
 
 %wi creata con ucover, funziona con la dk
-% Garray = usample(Gp,50);
-% orderWt = 2;
-% Garrayg = frd(Garray,logspace(-3,3,60));
-% [Usys,Info] = ucover(Garrayg,Gp.NominalValue,orderWt,'in');
-% wi = tf(Info.W1); Funziona con la dk
-% sigma(G_inv*(Gp.NominalValue-Garray),'b--'); hold on; sigma(Wt)
+Garray = usample(Gp,50);
+orderWt = 2;
+Garrayg = frd(Garray,logspace(-3,3,60));
+[Usys,Info] = ucover(Garrayg,Gp.NominalValue,orderWt,'in');
+wi = tf(Info.W1); % Funziona con la dk
+sigma(G_inv*(Gp.NominalValue-Garray),'b--'); hold on; sigma(wi)
 
 Wi = blkdiag(wi,wi);
 log_vars.Wi = Wi;

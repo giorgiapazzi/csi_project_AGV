@@ -25,21 +25,22 @@ omega = logspace(-1,6,302);
 rp_tau = w_rp/(rp);
 %wi = 10^2*1/(s)^5/(1+10^5*s)*(1+s*10^2)^6;
 %wi = rp_tau*rp*s/(1+rp*s);
-freq = [1.40494020600125e-14
-6.69677303868978e-07
-0.249740006959577
-2368.13236993714
-67387776523264.6];
-
-response = [849.322493224932
-504.607046070460
-10.2981029810296
--93.7669376693768
--76.4227642276426];
-system = frd(10.^(response/20),freq');
-wi = fitmagfrd(system,4,0);
-wi = minreal(tf(wi));
-Wi = blkdiag(wi,wi);
+% freq = [1.40494020600125e-14
+% 6.69677303868978e-07
+% 0.249740006959577
+% 2368.13236993714
+% 67387776523264.6];
+% 
+% response = [849.322493224932
+% 504.607046070460
+% 10.2981029810296
+% -93.7669376693768
+% -76.4227642276426];
+% system = frd(10.^(response/20),freq');
+% wi = fitmagfrd(system,4,0);
+% wi = minreal(tf(wi));
+%Wi = blkdiag(wi,wi);
+Wi = log_vars.Wi;
 WP = log_vars.WP;
 WU = log_vars.WU;
 
@@ -47,7 +48,7 @@ WU = log_vars.WU;
 %% Generalized plant P with Wi, Wu and Wp
 systemnames = 'sys WP WU Wi';
 inputvar = '[udel{2}; w{4}; u{2}]';
-outputvar = '[Wi ;WU; WP ; -w-sys]';
+outputvar = '[Wi ; WP ; WU; -w-sys]';
 input_to_sys = '[u+udel]';
 input_to_WP = '[sys]';
 input_to_WU = '[u]';
@@ -57,7 +58,20 @@ cleanupsysic = 'yes';
 sysic;
 P = minreal(ss(P));
 
-%
+Delta = ultidyn('Delta',[2 2]);
+                          
+
+%% DK-iteration tramite musyn
+                          
+
+% Il comando musyn prende la mixed-mu M in ingresso, sapendo che M = lft(delta,N)
+% dove qui al posto della N si ha la P
+% nmeas = 4; nu = 2;  
+% omega = logspace(-3,3,61);
+% M=lft(Delta,P);
+% opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid',omega)
+% [K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
+
 %% Initialize.
 %
 omega = logspace(-3,3,61);
@@ -66,8 +80,8 @@ nmeas = 4; nu = 2; d0 = 1;
 %delta in questo caso è diag{delta_i, delta_p}
 %delta_i è un blocco diagonale 2x2 ed è per questo che ho [1 1; 1 1];
 %delta_P invece è una matrice piena (non diagonale)
-D_left = append(d0,d0,tf(eye(6)),tf(eye(4)));
-D_right = append(d0,d0,tf(eye(6)));
+D_left = append(d0,d0,tf(eye(8)),tf(eye(2)));
+D_right = append(d0,d0,tf(eye(2)),tf(eye(4)));
 %
 % START ITERATION.
 %
@@ -77,12 +91,14 @@ D_right = append(d0,d0,tf(eye(6)));
 
     [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
                    'method','lmi','Tolgam',1e-3);
+    
 
     Nf = frd(lft(P,K),omega);
 %
 gamma_prec = gamma+1; 
 gamma_corr = gamma;
-while (gamma_prec > gamma_corr)
+N_it = 0;
+while (N_it<10)
 % STEP 2: Compute mu using upper bound:
     %Verifica della robusta stabilità
     [mubnds,Info] = mussv(Nf(1:2,1:2),[1 1;1 1],'c'); 
@@ -111,7 +127,7 @@ while (gamma_prec > gamma_corr)
 %     func_order_4_p = fitfrd(genphase(dsysl_p(1,1)),4);
 %     func_order_4_p=func_order_4_p.C*(inv(s*eye(4)-func_order_4_p.A))*func_order_4_p.B+func_order_4_p.D; 
 %     D_right=func_order_4_p;
-    D_left = append(d0,d0,tf(eye(6)),tf(eye(4)));
+    D_left = append(d0,d0,tf(eye(10)));
     D_right = append(d0,d0,tf(eye(6)));
     
      [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
@@ -119,6 +135,8 @@ while (gamma_prec > gamma_corr)
 
     Nf = frd(lft(P,K),omega);
 
-    gamma_prec = gamma_corr;
-    gamma_corr = gamma;
+%     gamma_prec = gamma_corr;
+%     gamma_corr = gamma;
+    N_it = N_it+1;
+  
 end

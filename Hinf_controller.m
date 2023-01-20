@@ -19,8 +19,8 @@ wBp = 1;
 wBt = 1;
 % Matrici di peso
 Wu = s/(s+wBt);
-%wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2;
-wP = (s/M+wBp)/(s+wBp*AP);
+wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2;
+%wP = (s/M+wBp)/(s+wBp*AP);
 wT = s/(s+wBt);
 WP = blkdiag(wP,wP,wP,wP);
 WT = blkdiag(wT,wT,wT,wT);

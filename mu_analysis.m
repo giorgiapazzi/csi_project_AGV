@@ -23,65 +23,64 @@ G_inv = inv(sys'*sys)*sys';
 %wi creata per punti con la ginput
 %muRSinf = 0.0014; muNPinf = 0.1070, muRPinf = 38.8978
 %non funziona con la dk
-% freq = [1.76236720195385e-14
-% 3.70891120355911e-12
-% 7.73255735566483e-11
-% 9.88344501101653e-09
-% 1.96923412162587e-07
-% 3.12786351032379e-06
-% 1.67375984003505e-05
-% 0.000107371579399216
-% 0.00178454496337455
-% 0.0389306738745860
-% 0.564763912507189
-% 2.88818212427404
-% 187.022601461826
-% 8426.78501816061
-% 784211.360930332
-% 24586644.0157908
-% 1159190427.60994
-% 129323321380.526
-% 6379991425502.34
-% 452340045456298];
-% 
-% response = [899.186991869919
-% 814.634146341463
-% 758.265582655826
-% 682.384823848238
-% 636.856368563686
-% 565.311653116531
-% 489.430894308943
-% 409.214092140921
-% 274.796747967480
-% 166.395663956640
-% 49.3224932249320
-% 14.6341463414633
-% -4.87804878048792
-% 8.13008130081289
-% 5.96205962059594
-% 10.2981029810296
-% -0.542005420054466
-% 3.79403794037921
-% 31.9783197831976
-% 36.3143631436312];
-% system = frd(10.^(response/20),freq');
-% sigma(G_inv*(Gp-sys)); hold on; sigma(system);
-% wi = fitmagfrd(system,2,2);
-% wi = tf(wi);
+freq = [1.76236720195385e-14
+3.70891120355911e-12
+7.73255735566483e-11
+9.88344501101653e-09
+1.96923412162587e-07
+3.12786351032379e-06
+1.67375984003505e-05
+0.000107371579399216
+0.00178454496337455
+0.0389306738745860
+0.564763912507189
+2.88818212427404
+187.022601461826
+8426.78501816061
+784211.360930332
+24586644.0157908
+1159190427.60994
+129323321380.526
+6379991425502.34
+452340045456298];
 
+response = [899.186991869919
+814.634146341463
+758.265582655826
+682.384823848238
+636.856368563686
+565.311653116531
+489.430894308943
+409.214092140921
+274.796747967480
+166.395663956640
+49.3224932249320
+14.6341463414633
+-4.87804878048792
+8.13008130081289
+5.96205962059594
+10.2981029810296
+-0.542005420054466
+3.79403794037921
+31.9783197831976
+36.3143631436312];
+system = frd(10.^(response/20),freq);
+%sigma(G_inv*(Gp-sys)); hold on; sigma(system);
+wi = fitmagfrd(system,2,2);
+wi = tf(wi);
+sigma(G_inv*(Gp-sys)); hold on; sigma(wi);  % forse dobbiamo stampare la wi per vedere se va bene invece che system
 
-
-%Funzione peso che sta sopra i valori singolari da 10^-5 in poi 
+%%Funzione peso che sta sopra i valori singolari da 10^-5 in poi 
 %muRSinf = 0.1322; muNPinf = 0.0729; muRPinf = 0.2841
-%Non funziona con la dk
+%%Non funziona con la dk
 % wi = 1/(1+s*10^10)^2*1/(1+s*10^6)^2*(1+s*10^3)^4*(1+s*10^17)^10*1/(1+s*10^15)^10;
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 
 
 
-%con questa funzione peso sto sopra ai valori singolari G_inv*(Gp-sys) da
-%10^-8 in poi, ottengo muRSinf=0.0138, muNPinf=0.0729, muRPinf = 0.1878;
-%Non funziona con la dk
+% %con questa funzione peso sto sopra ai valori singolari G_inv*(Gp-sys) da
+% 10^-8 in poi, ottengo muRSinf=0.0138, muNPinf=0.0729, muRPinf = 0.1878;
+% %Non funziona con la dk
 % wi = 1/(1+s*10^8)^3*1/(1+s*10^6)^2*(1+s*10^3)^5*(1+s*10^17)^10*1/(1+s*10^15)^10;
 % figure(1);
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
@@ -97,12 +96,12 @@ G_inv = inv(sys'*sys)*sys';
 
 
 %wi creata con ucover, funziona con la dk
-Garray = usample(Gp,50);
-orderWt = 2;
-Garrayg = frd(Garray,logspace(-3,3,60));
-[Usys,Info] = ucover(Garrayg,Gp.NominalValue,orderWt,'in');
-wi = tf(Info.W1); % Funziona con la dk
-sigma(G_inv*(Gp.NominalValue-Garray),'b--'); hold on; sigma(wi)
+% Garray = usample(Gp,50);
+% orderWt = 2;
+% Garrayg = frd(Garray,logspace(-3,3,60));
+% [Usys,Info] = ucover(Garrayg,Gp.NominalValue,orderWt,'in');
+% wi = tf(Info.W1); % Funziona con la dk
+% sigma(G_inv*(Gp.NominalValue-Garray),'b--'); hold on; sigma(wi)
 
 Wi = blkdiag(wi,wi);
 log_vars.Wi = Wi;
@@ -134,7 +133,7 @@ input_to_Wi = '[u]';
 sysoutname = 'P';
 cleanupsysic = 'yes';
 sysic;
-P = minreal(ss(P));
+%P = minreal(ss(P));
 % 
 % nmeas=4;
 % nu=2;
@@ -165,7 +164,7 @@ Mf = frd(M,omega);
 %% RS with mussv, rea
 
 %osservo autovalori di N per capire se è NS
-eig(N)
+%eig(N)
 % M = N(1,1), per la robusta stabilità la norma infinito di M deve essere
 % minore di 1
 Nrs = Nf(1:2,1:2);

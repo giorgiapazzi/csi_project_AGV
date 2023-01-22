@@ -66,9 +66,9 @@ response = [899.186991869919
 36.3143631436312];
 system = frd(10.^(response/20),freq);
 %sigma(G_inv*(Gp-sys)); hold on; sigma(system);
-wi = fitmagfrd(system,2,2);
-wi = tf(wi);
-sigma(G_inv*(Gp-sys)); hold on; sigma(wi);  % forse dobbiamo stampare la wi per vedere se va bene invece che system
+% wi = fitmagfrd(system,2,2);
+% wi = tf(wi);
+% sigma(G_inv*(Gp-sys)); hold on; sigma(wi);  % forse dobbiamo stampare la wi per vedere se va bene invece che system
 
 %%Funzione peso che sta sopra i valori singolari da 10^-5 in poi 
 %muRSinf = 0.1322; muNPinf = 0.0729; muRPinf = 0.2841
@@ -86,13 +86,13 @@ sigma(G_inv*(Gp-sys)); hold on; sigma(wi);  % forse dobbiamo stampare la wi per 
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 
 
-
-%wi il cui valore singolare sta sotto ai valori singolari di G_inv*(Gp-sys)
-%muRSinf = 0.0028; muNPinf = 0.0729; muRPinf = 0.0782;
-%Funziona con la dk
-%rp_tau = w_rp/(rp);
-%wi = rp_tau*rp*s/(1+rp*s);
-%sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
+% 
+% wi il cui valore singolare sta sotto ai valori singolari di G_inv*(Gp-sys)
+% muRSinf = 0.0028; muNPinf = 0.0729; muRPinf = 0.0782;
+% Funziona con la dk
+rp_tau = w_rp/(rp);
+wi = rp_tau*rp*s/(1+rp*s);
+sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 
 
 %wi creata con ucover, funziona con la dk

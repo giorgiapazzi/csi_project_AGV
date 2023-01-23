@@ -55,13 +55,14 @@ input_to_WU = '[u]';
 input_to_Wi = '[u]';
 sysoutname = 'P';
 cleanupsysic = 'yes';
+
 sysic;
 P = minreal(ss(P));
 
 Delta = ultidyn('Delta',[2 2]);
                           
 
-% DK-iteration tramite musyn
+%% DK-iteration tramite musyn
 
                           
 % 
@@ -72,9 +73,11 @@ omega = logspace(-3,3,61);
 M=lft(Delta,P);
 opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid',omega)
 [K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
-[A_DK B_DK C_DK D_DK] = ssdata(K_DK);
-%% Initialize.
-%
+%[A_DK B_DK C_DK D_DK] = ssdata(K_DK);
+%% DK ITERATION MANUALE 
+% funzione di interpolazione scelta di ordine 2
+%con la funzione wi di grado 1 funziona bene fino alla quarta iterazione
+%poi si perde ma arriva a muRP<1
 
 omega = logspace(-3,3,61);
 blk = [1 1; 1 1; 1 1; 1 1; 1 1; 1 1];
@@ -113,13 +116,13 @@ while (N_it<10)
     %Verifica della robusta performance
     [mubnds_rp,Info_rp] = mussv(Nf,[1 1;1 1;4 6],'c');
     bodemag(mubnds_rp(1,1),omega);
-    murp = norm(mubnds_rp(1,1),inf,1e-6);
+    murp = norm(mubnds_rp(1,1),inf,1e-6)
 %   
 % STEP 3: Fit resulting D-scales:
 %
     [dsysl,dsysr] = mussvunwrap(Info_rp);
     dsysl = dsysl/dsysl(3,3);
-    func_order_4 = fitfrd(genphase(dsysl(1,1)),1); 
+    func_order_4 = fitfrd(genphase(dsysl(1,1)),2); 
     %viene generata la fase interpolando con una funzione del 4° ordine
     %func_order_4=func_order_4.C*(inv(s*eye(4)-func_order_4.A))*func_order_4.B+func_order_4.D; 
     % poiché viene restituita in forma di stato viene trasfromata in 
@@ -142,3 +145,17 @@ while (N_it<10)
     N_it = N_it+1;
   
 end
+
+%% RS con robuststab
+%altrimenti is può far applicare la robusta stabilità direttamente da
+%matlab, 
+looptranfer = loopsens(Gp, K_DK);
+Ti = looptranfer.Ti;
+Tif = ufrd(Ti, omega);
+opt = robopt('Display','on');
+% con il comando successivo mi dice sulla robusta stabilità
+%in particolare stabmarg mi indica gli upper e lower bound, l'inverso del
+%lower bound deve essere uguale al muRSinf ottenuto con il comando mussv
+%destabunc mi indica esattamente l'incertezza massima tollerabile dal
+%sistema oltre la quale non è robustamente stabile
+[stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità

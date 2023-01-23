@@ -86,10 +86,10 @@ system = frd(10.^(response/20),freq);
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 
 
-% 
-% wi il cui valore singolare sta sotto ai valori singolari di G_inv*(Gp-sys)
-% muRSinf = 0.0028; muNPinf = 0.0729; muRPinf = 0.0782;
-% Funziona con la dk
+
+%wi il cui valore singolare sta sotto ai valori singolari di G_inv*(Gp-sys)
+%muRSinf = 0.0028; muNPinf = 0.0729; muRPinf = 0.0782;
+%Funziona con la dk
 rp_tau = w_rp/(rp);
 wi = rp_tau*rp*s/(1+rp*s);
 sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
@@ -159,7 +159,7 @@ sigma(Gpp, 'r'); hold on; sigma(sys, 'b');
 %bodemag(sys_inv*tf(Gp-sys),'r'); hold on; bodemag(Wi,'b');
 %bodemag(usample(sys_inv*(Gp-sys),50),'r'); hold on; bodemag(Wi,'b');
 M = lft(Delta,N);
-Mf = frd(M,omega);
+Mf = ufrd(M,omega);
 
 %% RS with mussv, rea
 
@@ -186,6 +186,20 @@ muNP = mubnds(:,1);
 muRP = mubnds(:,1);
 [muRPinf,muNSw]=norm(muRP,inf);
 save('dataset','log_vars');
+%% RS con robuststab
+%altrimenti is può far applicare la robusta stabilità direttamente da
+%matlab, 
+looptranfer = loopsens(Gp, K);
+Ti = looptranfer.Ti;
+Tif = ufrd(Ti, omega);
+opt = robopt('Display','on');
+% con il comando successivo mi dice sulla robusta stabilità
+%in particolare stabmarg mi indica gli upper e lower bound, l'inverso del
+%lower bound deve essere uguale al muRSinf ottenuto con il comando mussv
+%destabunc mi indica esattamente l'incertezza massima tollerabile dal
+%sistema oltre la quale non è robustamente stabile
+[stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità
+
 %% plots
 
 % figure(1);

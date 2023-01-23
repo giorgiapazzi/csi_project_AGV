@@ -29,4 +29,6 @@ Estss = ss(J.A,[J.B Bnoise],J.C,0);
 K_lqg =[A-B*Kr-Ke*C, Ke;
         -Kr, zeros(2,4)];
 K_LQG =ss(A-B*Kr-Ke*C,Ke,-Kr,zeros(2,4));
-% Test simulation on simulink: model.slx
+% Test simulation on simulink: 
+% For linear system: LQG_no_integrator.slx
+% For non linear system: LQG_non_linear.slx

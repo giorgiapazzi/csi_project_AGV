@@ -37,5 +37,3 @@ W = log_vars.W; % process noise weight
 V = log_vars.V; % measurement noise weight
 Estss = ss(J.A,[J.B Bnoise],J.C,0); 
 [Kess, Ke] = kalman(Estss,W,V); % Kalman filter
-
-% Test simulation on simulink: model_lqg_int.slx

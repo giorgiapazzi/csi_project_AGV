@@ -12,7 +12,16 @@ Gnom = minreal(tf(SYS));
 [Anom Bnom Cnom Dnom] = ssdata(Gnom);
 sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 
-% Dfinizione dei parametri di performance
+%Peso che richiede un errore massimo di regime più basso ma che limita le
+%performance robuste
+% M = 2; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
+% AP = 1.2; %errore massimo a regime
+% wBp = 0.2; %frequenza minima di banda per la performance
+% %wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; %wp per maggiore pendenza 
+% wP = (s/M+wBp)/(s+wBp*AP); %peso sulla performance
+
+%Peso di performance con alto valore di errore massimo a regime ma che
+%funziona bene per la RS
 M = 2; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
 AP = 3; %errore massimo a regime
 wBp = 1; %frequenza minima di banda per la performance
@@ -20,7 +29,7 @@ wBp = 1; %frequenza minima di banda per la performance
 wP = (s/M+wBp)/(s+wBp*AP); %peso sulla performance
 wBt = 1; %frequenza minima di banda per attenuazione di rumore di misura
 % Matrici di peso
-Wu = s/(s+wBt); %peso sullo sforzo di controllo
+Wu = tf(1);  %peso sullo sforzo di controllo
 
 %Definizione dei parametri
 % M = 2;
@@ -130,17 +139,17 @@ G_inv = inv(sys'*sys)*sys';%pseudoinversa sinistra
 % wi = tf(wi);
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);  % forse dobbiamo stampare la wi per vedere se va bene invece che system
 
-%%Funzione peso che sta sopra i valori singolari da 10^-5 in poi 
+%Funzione peso che sta sopra i valori singolari da 10^-5 in poi 
 %muRSinf = 0.1322; muNPinf = 0.0729; muRPinf = 0.2841
-%%Non funziona con la dk
+%Non funziona con la dk
 % wi = 1/(1+s*10^10)^2*1/(1+s*10^6)^2*(1+s*10^3)^4*(1+s*10^17)^10*1/(1+s*10^15)^10;
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 
 %Funzione che sta tutta sopra ma che non dà valori buoni sulla mu sintesi
 
-% %con questa funzione peso sto sopra ai valori singolari G_inv*(Gp-sys) da
-% 10^-8 in poi, ottengo muRSinf=0.0138, muNPinf=0.0729, muRPinf = 0.1878;
-% %Non funziona con la dk
+%con questa funzione peso sto sopra ai valori singolari G_inv*(Gp-sys) da
+%10^-8 in poi, ottengo muRSinf=0.0138, muNPinf=0.0729, muRPinf = 0.1878;
+%Non funziona con la dk
 % wi = 1/(1+s*10^8)^3*1/(1+s*10^6)^2*(1+s*10^3)^5*(1+s*10^17)^10*1/(1+s*10^15)^10;
 % figure(1);
 % sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
@@ -160,7 +169,7 @@ sigma(G_inv*(Gp-sys)); hold on; sigma(wi);
 % orderWt = 2;
 % Garrayg = frd(Garray,logspace(-3,3,60));
 % [Usys,Info] = ucover(Garrayg,Gp.NominalValue,orderWt,'in');
-% wi = tf(Info.W1); % Funziona con la dk
+% wi = Info.W1; % Funziona con la dk
 % sigma(G_inv*(Gp.NominalValue-Garray),'b--'); hold on; sigma(wi)
 
 Wi = blkdiag(wi,wi);
@@ -202,7 +211,7 @@ eig(N);
 Nrs = Nf(1:2,1:2);
 [mubnds,muinfo] = mussv(Nrs,[1 1; 1 1],'a');
 muRS = mubnds(:,1);
-[muRSinf,muRSw] = norm(muRS,inf);
+[muRSinf,muRSw] = norm(muRS,inf)
 
 %per la Performance Nominale devo fare un controllo sulla N22
 % DELTAP è una matrice complessa piena delle stesse dimensioni
@@ -211,12 +220,12 @@ muRS = mubnds(:,1);
 Nnp=Nf(3:8,3:6); % Picking out wP*Si
 [mubnds,muinfo]=mussv(Nnp,[4 6],'a');
 muNP = mubnds(:,1);
-[muNPinf,muNSw]=norm(muNP,inf);
+[muNPinf,muNSw]=norm(muNP,inf)
 
 %Performance robusta
 [mubnds,muinfo]=mussv(Nf,[1 1;1 1;4 6],'a');
 muRP = mubnds(:,1);
-[muRPinf,muNSw]=norm(muRP,inf);
+[muRPinf,muNSw]=norm(muRP,inf)
 
 %% RS con robuststab
 %altrimenti is può far applicare la robusta stabilità direttamente da
@@ -230,7 +239,6 @@ opt = robopt('Display','on');
 %lower bound deve essere uguale al muRSinf ottenuto con il comando mussv
 %destabunc mi indica esattamente l'incertezza massima tollerabile dal
 %sistema oltre la quale non è robustamente stabile
-[stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità
 
 %for RS with new "robstab" passing the whole  Nf
 [stabmarg, destabunc, info] = robstab(Mf, opt)

@@ -2,12 +2,7 @@
 close all
 global rp w_rp
 
-load('dataset');
 s = tf('s');
-sys = log_vars.sys;
-S = log_vars.S;
-T = log_vars.T;
-K = log_vars.K;
 J = get_linearization();
 A = J.A;
 B = J.B;
@@ -15,16 +10,31 @@ A_i = J.A_i;
 B_i = J.B_i;
 C = J.C;
 D = J.D;
+SYS = ss(A,B,C,D);    % funzione di trasferiemnto del sistema nominale
+Gnom = minreal(tf(SYS));
+[Anom Bnom Cnom Dnom] = ssdata(Gnom);
+sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 % autovalori = sigma(T);
 % sigma(T)
 omega = logspace(-1,6,302);
 %
 % Weights.
 %
-% Wp = 0.5*tf([10 1],[10 1.e-5])*eye(2);
 rp_tau = w_rp/(rp);
-%wi = 10^2*1/(s)^5/(1+10^5*s)*(1+s*10^2)^6;
-%wi = rp_tau*rp*s/(1+rp*s);
+wi = rp_tau*rp*s/(1+rp*s);
+
+%sta sopra da 10^-8
+%wi = 1/(1+s*10^8)^3*1/(1+s*10^6)^2*(1+s*10^3)^5*(1+s*10^17)^10*1/(1+s*10^15)^10;
+
+
+%Funzione peso che sta sopra i valori singolari da 10^-5 in poi 
+%muRSinf = 0.1322; muNPinf = 0.0729; muRPinf = 0.2841
+%Non funziona con la dk
+% wi = 1/(1+s*10^10)^2*1/(1+s*10^6)^2*(1+s*10^3)^4*(1+s*10^17)^10*1/(1+s*10^15)^10;
+Gp = C*(s*eye(5)-A_i)^(-1)*B_i; %G incerta
+G_inv = inv(sys'*sys)*sys';%pseudoinversa sinistra
+sigma(G_inv*(Gp-sys),[10^1,10^4]); hold on; sigma(wi,[10^1,10^4]);
+
 % freq = [1.40494020600125e-14
 % 6.69677303868978e-07
 % 0.249740006959577
@@ -39,10 +49,28 @@ rp_tau = w_rp/(rp);
 % system = frd(10.^(response/20),freq');
 % wi = fitmagfrd(system,4,0);
 % wi = minreal(tf(wi));
-%Wi = blkdiag(wi,wi);
-Wi = log_vars.Wi;
-WP = log_vars.WP;
-WU = log_vars.WU;
+
+
+Wi = blkdiag(wi,wi);
+M = 2; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
+AP = 3; %errore massimo a regime
+wBp = 1; %frequenza minima di banda per la performance
+%wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; %wp per maggiore pendenza 
+wP = (s/M+wBp)/(s+wBp*AP); %peso sulla performance% Matrici di peso
+Wu = tf(1);  %peso sullo sforzo di controllo
+
+%Definizione dei parametri
+% M = 2;
+% AP = 10^-2;
+% wBp = 10^-2;
+% wBt = 1;
+% wBu = 1;
+% % Matrici di peso
+% Wu = s/(s+wBu);
+% %wP = (s/M+wBp)/(s+wBp*AP);
+
+WP = blkdiag(wP,wP,wP,wP);
+WU = blkdiag(Wu,Wu);
 
 
 %% Generalized plant P with Wi, Wu and Wp
@@ -50,12 +78,11 @@ systemnames = 'sys WP WU Wi';
 inputvar = '[udel{2}; w{4}; u{2}]';
 outputvar = '[Wi ; WP ; WU; -w-sys]';
 input_to_sys = '[u+udel]';
-input_to_WP = '[sys]';
+input_to_WP = '[sys+w]';
 input_to_WU = '[u]';
 input_to_Wi = '[u]';
 sysoutname = 'P';
 cleanupsysic = 'yes';
-
 sysic;
 P = minreal(ss(P));
 
@@ -63,13 +90,10 @@ Delta = ultidyn('Delta',[2 2]);
                           
 
 %% DK-iteration tramite musyn
-
-                          
-% 
 % Il comando musyn prende la mixed-mu M in ingresso, sapendo che M = lft(delta,N)
 % dove qui al posto della N si ha la P
 nmeas = 4; nu = 2;  
-omega = logspace(-3,3,61);
+omega = logspace(-1,6,302);
 M=lft(Delta,P);
 opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid',omega)
 [K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);

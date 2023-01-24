@@ -1,3 +1,4 @@
+
 % Uses the Robust Control toolbox
 close all
 global rp w_rp
@@ -21,7 +22,7 @@ omega = logspace(-1,6,302);
 % Weights.
 %
 rp_tau = w_rp/(rp);
-wi = rp_tau*rp*s/(1+rp*s);
+wi = 5*rp_tau*rp*s/(1+rp*s);
 
 %sta sopra da 10^-8
 %wi = 1/(1+s*10^8)^3*1/(1+s*10^6)^2*(1+s*10^3)^5*(1+s*10^17)^10*1/(1+s*10^15)^10;
@@ -33,7 +34,7 @@ wi = rp_tau*rp*s/(1+rp*s);
 % wi = 1/(1+s*10^10)^2*1/(1+s*10^6)^2*(1+s*10^3)^4*(1+s*10^17)^10*1/(1+s*10^15)^10;
 Gp = C*(s*eye(5)-A_i)^(-1)*B_i; %G incerta
 G_inv = inv(sys'*sys)*sys';%pseudoinversa sinistra
-sigma(G_inv*(Gp-sys),[10^1,10^4]); hold on; sigma(wi,[10^1,10^4]);
+sigma(G_inv*(Gp-sys),[10^0.5,10^4]); hold on; sigma(wi,[10^0.5,10^4]);
 
 % freq = [1.40494020600125e-14
 % 6.69677303868978e-07
@@ -97,7 +98,7 @@ omega = logspace(-1,6,302);
 M=lft(Delta,P);
 opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid',omega)
 [K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
-%[A_DK B_DK C_DK D_DK] = ssdata(K_DK);
+
 %% DK ITERATION MANUALE 
 % funzione di interpolazione scelta di ordine 2
 %con la funzione wi di grado 1 funziona bene fino alla quarta iterazione
@@ -118,7 +119,7 @@ D_right = append(d0,d0,tf(eye(2)),tf(eye(4)));
 % with given scalings:
 %
 
-    [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
+    [K_DK,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
                    'method','lmi','Tolgam',1e-3);
     
 
@@ -159,7 +160,7 @@ while (N_it<10)
     D_left = append(d0,d0,tf(eye(10)));
     D_right = append(d0,d0,tf(eye(6)));
     
-     [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
+     [K_DK,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
                    'method','lmi','Tolgam',1e-3);
 
     Nf = frd(lft(P,K),omega);
@@ -170,16 +171,22 @@ while (N_it<10)
   
 end
 
+
+%% sezione da eseguire per SIMULINK una volta sintetizzato il controllore
+[A_DK B_DK C_DK D_DK] = ssdata(K);
 %% RS con robuststab
-%altrimenti is può far applicare la robusta stabilità direttamente da
-%matlab, 
-looptranfer = loopsens(Gp, K_DK);
+
+looptranfer = loopsens(Gp, K);
 Ti = looptranfer.Ti;
 Tif = ufrd(Ti, omega);
 opt = robopt('Display','on');
-% con il comando successivo mi dice sulla robusta stabilità
 %in particolare stabmarg mi indica gli upper e lower bound, l'inverso del
 %lower bound deve essere uguale al muRSinf ottenuto con il comando mussv
 %destabunc mi indica esattamente l'incertezza massima tollerabile dal
 %sistema oltre la quale non è robustamente stabile
-[stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità
+[stabmarg, destabunc, report] = robuststab(Tif,opt) 
+%incertezza massime che mi porterebbero all'instabilità
+
+%RP analysis è equivalente a robuststab ma si utilizza per la performance
+%nominale
+[stabmarg, destabunc, info] = robustperf(Mf, opt)

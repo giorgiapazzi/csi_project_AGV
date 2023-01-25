@@ -1,7 +1,6 @@
 function j_matrix = get_linearization_lqg()
     clc
-    global  l L IPy IPz Mv mp ma IAy d IGz IAz a b a_i b_i rp_i ra_i rp ra
-   
+    global  l L IPy IPz Mv mp ma IAy d IGz IAz a b a_i b_i rp_i ra_i ra rp 
     %% Vettore di stato X = [y theta phi_dot psi psi_dot]
     %Tau=[tau_phi tau_psi]  ingressi
     Tau=sym('tau',[2 1],'real');
@@ -60,18 +59,27 @@ function j_matrix = get_linearization_lqg()
            0 0;
            1200/(23000*(rp_i)^2 + 180) 0;
            0, 0;
-           0, 100/23]
-    C = double(subs(C, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']))
-    D = double(subs(D, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']))
+           0, 100/23];
+    C = double(subs(C, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));
+    D = double(subs(D, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));
 %     A_i = double(subs(A_i, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));
 %     B_i = double(subs(B_i, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));
 %     
     % Controllo proprietà strutturali delle matrici del sistema
     % eig(A);   % autovalori del sistema
-    R = rank(ctrb(A,B)) % rango matrice di raggiungibilità
-    O = rank(obsv(A,C))  % rango matrice di osservabilità
-    [Ao, Bo, Co] = obsvf(A,B,C);    % sistema in forma standard di osservabilità
-
+    %R = rank(ctrb(A,B)) % rango matrice di raggiungibilità
+    %O = rank(obsv(A,C))  % rango matrice di osservabilità
+    %[Ao, Bo, Co] = obsvf(A,B,C);    % sistema in forma standard di osservabilità
+%     A_sym = [s, -rp, 0, 0, 0;
+%             0,s,0, -rp,0;
+%             0, 0, s,0, 0;
+%             0,0, 0, s, -1;
+%              0, 0, 0,0,s+(20*rp*1150*rp^2 + 9)/(23000*rp^2 + 180)];
+%     B_sym = [0,0;
+%              0,0;
+%             1200/rp^2 + 180,0;
+%             0,0;
+%             0, 100/23];
     j_matrix = struct();
     j_matrix.A = A;
     j_matrix.B = B;
@@ -79,5 +87,7 @@ function j_matrix = get_linearization_lqg()
     j_matrix.D = D;
     j_matrix.A_i = A_i;
     j_matrix.B_i = B_i;
+%     j_matrix.A_sym = A_sym;
+%     j_matrix.B_sym = B_sym;
 end
 

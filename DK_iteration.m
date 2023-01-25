@@ -3,6 +3,7 @@
 close all
 global rp w_rp
 
+
 s = tf('s');
 J = get_linearization();
 A = J.A;
@@ -59,7 +60,9 @@ wBp = 1; %frequenza minima di banda per la performance
 %wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; %wp per maggiore pendenza 
 wP = (s/M+wBp)/(s+wBp*AP); %peso sulla performance% Matrici di peso
 Wu = tf(1);  %peso sullo sforzo di controllo
-
+wBt = 1;
+wT = s/(s+wBt);%peso sul rumore di misura
+WT = blkdiag(wT,wT,wT,wT);
 %Definizione dei parametri
 % M = 2;
 % AP = 10^-2;
@@ -75,10 +78,11 @@ WU = blkdiag(Wu,Wu);
 
 
 %% Generalized plant P with Wi, Wu and Wp
-systemnames = 'sys WP WU Wi';
+systemnames = 'sys WT WP WU Wi';
 inputvar = '[udel{2}; w{4}; u{2}]';
 outputvar = '[Wi ; WP ; WU; -w-sys]';
 input_to_sys = '[u+udel]';
+input_to_WT = '[sys]';
 input_to_WP = '[sys+w]';
 input_to_WU = '[u]';
 input_to_Wi = '[u]';

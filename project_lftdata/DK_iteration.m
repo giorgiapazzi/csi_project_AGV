@@ -1,14 +1,12 @@
-% Uses the Robust Control toolbox
 close all
 global rp w_rp
 
 s = tf('s');
-
-J = get_linearization();
+J = get_linearization();    % richiama la funzione per la linearizzazione del sistema
 A = J.A;
 B = J.B;
-A_i = J.A_i;
-B_i = J.B_i;
+A_i = J.A_i;    % Matrice della dinamica A incerta
+B_i = J.B_i;    % Matrice B incerta
 C = J.C;
 D = J.D;
 
@@ -18,24 +16,22 @@ Gp = ss(A_i,B_i,C,D);
 G_i= minreal(tf(Gp));
 [Ap Bp Cp Dp] = ssdata(G_i);
 Gi = minreal(ss(Ap,Bp,Cp,Dp));
-%Definizione dei pesi di performance
 
-%Costruzione della Wp
-M = 1; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
-AP = 10^-1; %errore massimo a regime
-wBp = 1; %frequenza minima di banda per la performance
-wP = 5*10^-2*(s/M+wBp)/(s+wBp*AP); %peso sulla performance
-%wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; %wp per maggiore pendenza 
+%Definizione dei pesi di performance
+% Costruzione della WP, peso sulla performance
+M = 1;  % picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
+AP = 10^-1; % errore massimo a regime
+wBp = 1;    % frequenza minima di banda per la performance
+wP = 5*10^-2*(s/M+wBp)/(s+wBp*AP);  % peso sulla performance
+%wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; % wp per maggiore pendenza 
 WP = blkdiag(wP,wP,wP,wP);
 
-%Costruzione della WU
+%Costruzione della WU, peso sullo sforzo di controllo
 wBu = 1;
-WU = 1/10*tf(eye(2)); %peso sullo sforzo di controllo
-%WU = blkdiag(Wu,Wu);
+WU = 1/10*tf(eye(2));   % peso sullo sforzo di controllo
 
-%Costruzione della WT
+%Costruzione della WT, peso sul rumore di misura
 Wt = makeweight(10^-2,20,500);
-%Wt = s/(s+wBt);%peso sul rumore di misura
 WT = blkdiag(Wt,Wt,Wt,Wt);
 
 
@@ -46,8 +42,7 @@ Gnom = minreal(tf(SYS));
 sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 
 
-
-%% Generalized plant P with Wi, Wu and Wp
+%% Generalized plant P with WP, WU and WT
 systemnames = 'Gp WP WU WT';
 inputvar = '[w{4}; u{2}]';
 outputvar = '[WP ; WU; WT; -w-Gp]';
@@ -57,29 +52,27 @@ input_to_WU = '[u]';
 input_to_WT = '[Gp]';
 sysoutname = 'P_i';
 cleanupsysic = 'yes';
-
 sysic;
 
 [P, Delta, blk] = lftdata(P_i);
                           
 
 %% DK-iteration tramite musyn
-
-      
+     
 % Il comando musyn prende la mixed-mu M in ingresso, sapendo che M = lft(delta,N)
 % dove qui al posto della N si ha la P
 nmeas = 4; nu = 2;  
 omega = logspace(-3,3,61);
-M=lft(Delta,P);
-opts=musynOptions('Display','full','MaxIter',3,'TolPerf',0.001,'FrequencyGrid',omega)
-[K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
+M = lft(Delta,P);
+opts = musynOptions('Display','full','MaxIter',3,'TolPerf',0.001,'FrequencyGrid',omega)
+[K_DK,CLPperf,info_mu] = musyn(M,nmeas,nu,opts);
 [A_DK B_DK C_DK D_DK] = ssdata(K_DK);
 
 %Verifica della nominale stabilità
 N = lft(P,K_DK);
 eig(N);
 
-%[A_DK B_DK C_DK D_DK] = ssdata(K_DK);
+
 %% DK ITERATION MANUALE 
 % funzione di interpolazione scelta di ordine 2
 %con la funzione wi di grado 1 funziona bene fino alla quarta iterazione

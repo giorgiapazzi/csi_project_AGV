@@ -65,97 +65,102 @@ sysic;
 
 %% DK-iteration tramite musyn
 
-                          
-% 
+      
 % Il comando musyn prende la mixed-mu M in ingresso, sapendo che M = lft(delta,N)
 % dove qui al posto della N si ha la P
 nmeas = 4; nu = 2;  
 omega = logspace(-3,3,61);
 M=lft(Delta,P);
-opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid',omega)
+opts=musynOptions('Display','full','MaxIter',3,'TolPerf',0.001,'FrequencyGrid',omega)
 [K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
+[A_DK B_DK C_DK D_DK] = ssdata(K_DK);
+
+%Verifica della nominale stabilità
+N = lft(P,K_DK);
+eig(N);
+
 %[A_DK B_DK C_DK D_DK] = ssdata(K_DK);
 %% DK ITERATION MANUALE 
 % funzione di interpolazione scelta di ordine 2
 %con la funzione wi di grado 1 funziona bene fino alla quarta iterazione
 %poi si perde ma arriva a muRP<1
 
-omega = logspace(-3,3,61);
-nmeas = 4; nu = 2; d0 = 1; 
-%delta in questo caso è diag{delta_i, delta_p}
-%delta_i è un blocco diagonale 2x2 ed è per questo che ho [1 1; 1 1];
-%delta_P invece è una matrice piena (non diagonale)
-D_left = append(d0*tf(eye(9)),tf(eye(14)));
-D_right = append(d0*tf(eye(9)),tf(eye(6)));
-%
-% START ITERATION.
-%
-% STEP 1: Find H-infinity optimal controller
-% with given scalings:
-%
-
-    [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
-                   'method','lmi','Tolgam',1e-3);
-    
-
-    Nf = frd(lft(P,K),omega);
-%
-gamma_prec = gamma+1; 
-gamma_corr = gamma;
-N_it = 0;
-while (N_it<10)
-% STEP 2: Compute mu using upper bound:
-    %Verifica della robusta stabilità
-    [mubnds,Info] = mussv(Nf(1:9,1:9),blk,'c'); 
-    bodemag(mubnds(1,1),omega);
-    murs = norm(mubnds(1,1),inf,1e-6);
-    %Verifica della performance nominale
-    [mubnds_pn,Info_np] = mussv(Nf(10:end,10:end),[4 10],'c');
-    bodemag(mubnds_pn(1,1),omega);
-    munp = norm(mubnds_pn(1,1),inf,1e-6);
-    %Verifica della robusta performance
-    [mubnds_rp,Info_rp] = mussv(Nf,[9 0;4 10],'c');
-    bodemag(mubnds_rp(1,1),omega);
-    murp = norm(mubnds_rp(1,1),inf,1e-6)
+% omega = logspace(-3,3,61);
+% nmeas = 4; nu = 2; d0 = 1; 
+% %delta in questo caso è diag{delta_i, delta_p}
+% %delta_i è un blocco diagonale 2x2 ed è per questo che ho [1 1; 1 1];
+% %delta_P invece è una matrice piena (non diagonale)
+% D_left = append(tf(eye(14)));
+% D_right = append(d0,d0,d0,d0,d0,d0,d0,d0,d0,tf(eye(6)));
+% %
+% % START ITERATION.
+% %
+% % STEP 1: Find H-infinity optimal controller
+% % with given scalings:
+% %
+% 
+%     [K,Nsc,gamma,info] = hinfsyn(P_i,nmeas,nu,....
+%                    'method','lmi','Tolgam',1e-3);
+%     
+% 
+%     Nf = frd(lft(P,K),omega);
+% %
+% gamma_prec = gamma+1; 
+% gamma_corr = gamma;
+% N_it = 0;
+% while (N_it<10)
+% % STEP 2: Compute mu using upper bound:
+%     %Verifica della robusta stabilità
+%     [mubnds,Info] = mussv(Nf(1:9,1:9),blk,'c'); 
+%     bodemag(mubnds(1,1),omega);
+%     murs = norm(mubnds(1,1),inf,1e-6);
+%     %Verifica della performance nominale
+%     [mubnds_pn,Info_np] = mussv(Nf(10:end,10:end),[4 10],'c');
+%     bodemag(mubnds_pn(1,1),omega);
+%     munp = norm(mubnds_pn(1,1),inf,1e-6);
+%     %Verifica della robusta performance
+%     [mubnds_rp,Info_rp] = mussv(Nf,[9 0;4 10],'c');
+%     bodemag(mubnds_rp(1,1),omega);
+%     murp = norm(mubnds_rp(1,1),inf,1e-6)
+% %   
+% % STEP 3: Fit resulting D-scales:
+% %
+%     [dsysl,dsysr] = mussvunwrap(Info_rp);
+%     dsysl = dsysl/dsysl(3,3);
+%     func_order_4 = fitfrd(genphase(dsysl(1,1)),1); 
+%     %viene generata la fase interpolando con una funzione del 4° ordine
+%     %func_order_4=func_order_4.C*(inv(s*eye(4)-func_order_4.A))*func_order_4.B+func_order_4.D; 
+%     % poiché viene restituita in forma di stato viene trasfromata in 
+%     % funzione di trasferimento prima di metterla in Dk
+%     d0 = tf(minreal(func_order_4));
+%     
+% %     func_order_4_p = fitfrd(genphase(dsysl_p(1,1)),4);
+% %     func_order_4_p=func_order_4_p.C*(inv(s*eye(4)-func_order_4_p.A))*func_order_4_p.B+func_order_4_p.D; 
+% %     D_right=func_order_4_p;
+%     D_left = append(d0,d0,d0,d0,d0,d0,d0,d0,d0,tf(eye(14)));
+%     D_right = append(d0,d0,d0,d0,d0,d0,d0,d0,d0,tf(eye(6)));
+%     
+%      [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
+%                    'method','lmi','Tolgam',1e-3);
+% 
+%     Nf = frd(lft(P,K),omega);
+% 
+% %     gamma_prec = gamma_corr;
+% %     gamma_corr = gamma;
+%     N_it = N_it+1;
 %   
-% STEP 3: Fit resulting D-scales:
-%
-    [dsysl,dsysr] = mussvunwrap(Info_rp);
-    dsysl = dsysl/dsysl(3,3);
-    func_order_4 = fitfrd(genphase(dsysl(1,1)),2); 
-    %viene generata la fase interpolando con una funzione del 4° ordine
-    %func_order_4=func_order_4.C*(inv(s*eye(4)-func_order_4.A))*func_order_4.B+func_order_4.D; 
-    % poiché viene restituita in forma di stato viene trasfromata in 
-    % funzione di trasferimento prima di metterla in Dk
-    d0 = tf(minreal(func_order_4));
-    
-%     func_order_4_p = fitfrd(genphase(dsysl_p(1,1)),4);
-%     func_order_4_p=func_order_4_p.C*(inv(s*eye(4)-func_order_4_p.A))*func_order_4_p.B+func_order_4_p.D; 
-%     D_right=func_order_4_p;
-    D_left = append(d0*tf(eye(9)),tf(eye(14)));
-    D_right = append(d0*tf(eye(9)),tf(eye(6)));
-    
-     [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
-                   'method','lmi','Tolgam',1e-3);
-
-    Nf = frd(lft(P,K),omega);
-
-%     gamma_prec = gamma_corr;
-%     gamma_corr = gamma;
-    N_it = N_it+1;
-  
-end
+% end
 
 %% RS con robuststab
 %altrimenti is può far applicare la robusta stabilità direttamente da
 %matlab, 
-looptranfer = loopsens(Gp, K_DK);
-Ti = looptranfer.Ti;
-Tif = ufrd(Ti, omega);
-opt = robopt('Display','on');
+% looptranfer = loopsens(Gp, K_DK);
+% Ti = looptranfer.Ti;
+% Tif = ufrd(Ti, omega);
+% opt = robopt('Display','on');
 % con il comando successivo mi dice sulla robusta stabilità
 %in particolare stabmarg mi indica gli upper e lower bound, l'inverso del
 %lower bound deve essere uguale al muRSinf ottenuto con il comando mussv
 %destabunc mi indica esattamente l'incertezza massima tollerabile dal
 %sistema oltre la quale non è robustamente stabile
-[stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità
+% [stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità

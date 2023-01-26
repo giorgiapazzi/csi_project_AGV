@@ -7,7 +7,8 @@ A = J.A;
 B = J.B;
 C = J.C;
 D = J.D;
-G = J.C*(s*eye(5)-J.A)^(-1)*J.B;    % transfer function
+G_act = blkdiag(G_tau_phi.NominalValue,G_tau_psi.NominalValue);
+G = J.C*(s*eye(5)-J.A)^(-1)*J.B*G_act;    % transfer function
 
 % Model dimensions:
 p = size(J.C,1); % no. of outputs (y)

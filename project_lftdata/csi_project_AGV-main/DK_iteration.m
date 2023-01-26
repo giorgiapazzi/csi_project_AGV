@@ -2,12 +2,8 @@
 close all
 global rp w_rp
 
-load('dataset');
 s = tf('s');
-sys = log_vars.sys;
-S = log_vars.S;
-T = log_vars.T;
-K = log_vars.K;
+
 J = get_linearization();
 A = J.A;
 B = J.B;
@@ -15,10 +11,7 @@ A_i = J.A_i;
 B_i = J.B_i;
 C = J.C;
 D = J.D;
-% autovalori = sigma(T);
-% sigma(T)
-omega = logspace(-1,6,302);
-%
+
 % Weights.
 %
 % Wp = 0.5*tf([10 1],[10 1.e-5])*eye(2);

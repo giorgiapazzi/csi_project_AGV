@@ -10,8 +10,11 @@ A_i = Jo.A_i; %Matrice della dinamica A incerta
 B_i = Jo.B_i; %Matrice B incerta
 
 %Costruzione della funzione di trasferimento incerta
-Gp = C*(s*eye(5)-A_i)^(-1)*B_i; 
-
+%Gp = C*(s*eye(5)-A_i)^(-1)*B_i;
+Gp = ss(A_i,B_i,C,D);
+G_i= minreal(tf(Gp));
+[Ap Bp Cp Dp] = ssdata(G_i);
+Gi = minreal(ss(Ap,Bp,Cp,Dp));
 %Definizione dei pesi di performance
 
 %Costruzione della Wp
@@ -55,7 +58,11 @@ sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 %% Controllore H inf con MIXSYN
 
 [K,ghinf,gopt] = mixsyn(Gp,WP,WU,WT);
-[Amix Bmix Cmix Dmix] = ssdata(K);
+
+%Simulink
+[K_mix,ghinf_mix,gopt_mix] = mixsyn(sys,WP,WU,WT);
+[Amix Bmix Cmix Dmix] = ssdata(K_mix);
+
 
 %% Interconnessione e Controllore con HINF 
 
@@ -73,6 +80,7 @@ sysic;
 
 nmeas=4; %Numero uscite dall'impianto
 nu=2; %Numero ingressi all'impianto
+[Khinf,CL,gamma] = hinfsyn(P_i,nmeas,nu);
 [Khinf,CL,gamma] = hinfsyn(P_i,nmeas,nu);
 [Ahinf,Bhinf,Chinf,Dhinf] = ssdata(Khinf);
 looptrans = loopsens(Gp,Khinf);
@@ -95,7 +103,7 @@ save('dataset','log_vars');
 omega = logspace(-1,6,100);
 
 % Struttura MDelta
-N = lft(P,Khinf); %funzione di trasferimento tra w e z
+N = lft(P,K_mix); %funzione di trasferimento tra w e z
 Nf = frd(N,omega);%risposta in frequenza di N
 
 M = lft(Delta,N); %Si ottiene la fdt tra udel e ydel
@@ -146,7 +154,7 @@ opt = robopt('Display','on');
 %RP analysis with robgain
 Delta_P = ultidyn('Delta_P', [4 10]);
 delta = blkdiag(Delta, Delta_P);
-N = lft(P, Khinf);
+N = lft(P, K_mix);
 F = lft(delta, N);
 Ff = ufrd(F, omega);
 [perfmarg, destabunc, info] = robgain(Ff, 1, opt)

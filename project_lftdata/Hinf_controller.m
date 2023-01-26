@@ -32,7 +32,7 @@ WU = 1/10*tf(eye(2)); %peso sullo sforzo di controllo
 
 %Costruzione della WT
 wBt = 1; %frequenza minima di banda per attenuazione di rumore di misura
-Wt = makeweight(0.0001,50,500);
+Wt = makeweight(10^-2,20,500);
 %Wt = s/(s+wBt);%peso sul rumore di misura
 WT = blkdiag(Wt,Wt,Wt,Wt);
 
@@ -81,19 +81,18 @@ sysic;
 nmeas=4; %Numero uscite dall'impianto
 nu=2; %Numero ingressi all'impianto
 [Khinf,CL,gamma] = hinfsyn(P_i,nmeas,nu);
-[Khinf,CL,gamma] = hinfsyn(P_i,nmeas,nu);
 [Ahinf,Bhinf,Chinf,Dhinf] = ssdata(Khinf);
 looptrans = loopsens(Gp,Khinf);
 
 figure(1);
-sigma(looptrans.So, 'b'); hold on; sigma(1/WP,'r-.');
-legend('S','gopt/W1');
+sigma(looptrans.So, 'b'); hold on; sigma(1/WP,'r-.'); 
+legend('S','gopt/W1'); hold off;
 figure(2);
 sigma(looptrans.To,'r'); hold on; sigma(1/WT,'r-.');
-legend('T','gopt/WT','r-.');
+legend('T','gopt/WT','r-.','location','south'); hold off;
 figure(3);
 sigma(Khinf*looptrans.So,'g'); hold on; sigma(1/WU,'g-.');
-legend('KS','gopt/WU');
+legend('KS','gopt/WU'); hold off;
 % sigma(S,'b',K*S,'r',T,'g',gopt/WP,'b-.',gopt/WU,'m-.',gopt/WT,'g-.',{1e-3,1e3})
 % legend('S','KS','T','GAM/W1','GAM/W2','GAM/W3','Location','SouthWest');
 save('dataset','log_vars');
@@ -103,7 +102,7 @@ save('dataset','log_vars');
 omega = logspace(-1,6,100);
 
 % Struttura MDelta
-N = lft(P,K_mix); %funzione di trasferimento tra w e z
+N = lft(P,Khinf); %funzione di trasferimento tra w e z
 Nf = frd(N,omega);%risposta in frequenza di N
 
 M = lft(Delta,N); %Si ottiene la fdt tra udel e ydel
@@ -149,16 +148,19 @@ opt = robopt('Display','on');
 %[stabmarg, destabunc, report] = robuststab(Tif,opt) %incertezze massime che mi porterebbero all'instabilità
 
 %for RS with new "robstab" passing the whole  Nf
-[stabmarg, destabunc, info] = robstab(Mf, opt)
+%[stabmarg, destabunc, info] = robstab(Mf, opt)
+
 
 %RP analysis with robgain
 Delta_P = ultidyn('Delta_P', [4 10]);
 delta = blkdiag(Delta, Delta_P);
-N = lft(P, K_mix);
+N = lft(P, Khinf);
 F = lft(delta, N);
 Ff = ufrd(F, omega);
 [perfmarg, destabunc, info] = robgain(Ff, 1, opt)
 
+%RP analysis with robperf
+[stabmarg, destabunc, info] = robustperf(Ff, opt)
 
 
 

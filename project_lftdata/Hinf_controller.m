@@ -59,7 +59,7 @@ sysic;
 %% Controllore Hinf con MIXSYN
 
 [Kmyx,ghinf,gopt] = mixsyn(Gp,WP,WU,WT);
-looptrans = loopsens(Gp,K); % Funzione di trasferimento a ciclo chiuso
+looptrans = loopsens(Gp,Kmyx); % Funzione di trasferimento a ciclo chiuso
 
 %Simulink
 [K_mix,ghinf_mix,gopt_mix] = mixsyn(sys,WP,WU,WT);
@@ -73,7 +73,7 @@ figure(2);
 sigma(looptrans.To,'r'); hold on; sigma(1/WT,'r-.');
 legend('T','gopt/WT','location','south'); hold off;
 figure(3);
-sigma(K*looptrans.So,'g'); hold on; sigma(1/WU,'g-.');
+sigma(Kmyx*looptrans.So,'g'); hold on; sigma(1/WU,'g-.');
 legend('KS','gopt/WU'); hold off;
 % figure(4)
 % sigma(S,'b',K*S,'r',T,'g',gopt/WP,'b-.',gopt/WU,'m-.',gopt/WT,'g-.',{1e-3,1e3})

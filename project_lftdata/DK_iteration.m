@@ -12,47 +12,55 @@ B_i = J.B_i;
 C = J.C;
 D = J.D;
 
-% Weights.
-%
-% Wp = 0.5*tf([10 1],[10 1.e-5])*eye(2);
-rp_tau = w_rp/(rp);
-%wi = 10^2*1/(s)^5/(1+10^5*s)*(1+s*10^2)^6;
-%wi = rp_tau*rp*s/(1+rp*s);
-% freq = [1.40494020600125e-14
-% 6.69677303868978e-07
-% 0.249740006959577
-% 2368.13236993714
-% 67387776523264.6];
-% 
-% response = [849.322493224932
-% 504.607046070460
-% 10.2981029810296
-% -93.7669376693768
-% -76.4227642276426];
-% system = frd(10.^(response/20),freq');
-% wi = fitmagfrd(system,4,0);
-% wi = minreal(tf(wi));
-%Wi = blkdiag(wi,wi);
-Wi = log_vars.Wi;
-WP = log_vars.WP;
-WU = log_vars.WU;
+%Costruzione della funzione di trasferimento incerta
+%Gp = C*(s*eye(5)-A_i)^(-1)*B_i;
+Gp = ss(A_i,B_i,C,D);
+G_i= minreal(tf(Gp));
+[Ap Bp Cp Dp] = ssdata(G_i);
+Gi = minreal(ss(Ap,Bp,Cp,Dp));
+%Definizione dei pesi di performance
+
+%Costruzione della Wp
+M = 1; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
+AP = 10^-1; %errore massimo a regime
+wBp = 1; %frequenza minima di banda per la performance
+wP = 5*10^-2*(s/M+wBp)/(s+wBp*AP); %peso sulla performance
+%wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; %wp per maggiore pendenza 
+WP = blkdiag(wP,wP,wP,wP);
+
+%Costruzione della WU
+wBu = 1;
+WU = 1/10*tf(eye(2)); %peso sullo sforzo di controllo
+%WU = blkdiag(Wu,Wu);
+
+%Costruzione della WT
+Wt = makeweight(10^-2,20,500);
+%Wt = s/(s+wBt);%peso sul rumore di misura
+WT = blkdiag(Wt,Wt,Wt,Wt);
+
+
+%Funzione di trasferimento del sistema nominale
+SYS = ss(A,B,C,D);   
+Gnom = minreal(tf(SYS));
+[Anom Bnom Cnom Dnom] = ssdata(Gnom);
+sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
+
 
 
 %% Generalized plant P with Wi, Wu and Wp
-systemnames = 'sys WP WU Wi';
-inputvar = '[udel{2}; w{4}; u{2}]';
-outputvar = '[Wi ; WP ; WU; -w-sys]';
-input_to_sys = '[u+udel]';
-input_to_WP = '[sys]';
+systemnames = 'Gp WP WU WT';
+inputvar = '[w{4}; u{2}]';
+outputvar = '[WP ; WU; WT; -w-Gp]';
+input_to_Gp = '[u]';
+input_to_WP = '[-w-Gp]';
 input_to_WU = '[u]';
-input_to_Wi = '[u]';
-sysoutname = 'P';
+input_to_WT = '[Gp]';
+sysoutname = 'P_i';
 cleanupsysic = 'yes';
 
 sysic;
-P = minreal(ss(P));
 
-Delta = ultidyn('Delta',[2 2]);
+[P, Delta, blk] = lftdata(P_i);
                           
 
 %% DK-iteration tramite musyn
@@ -73,13 +81,12 @@ opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid'
 %poi si perde ma arriva a muRP<1
 
 omega = logspace(-3,3,61);
-blk = [1 1; 1 1; 1 1; 1 1; 1 1; 1 1];
 nmeas = 4; nu = 2; d0 = 1; 
 %delta in questo caso è diag{delta_i, delta_p}
 %delta_i è un blocco diagonale 2x2 ed è per questo che ho [1 1; 1 1];
 %delta_P invece è una matrice piena (non diagonale)
-D_left = append(d0,d0,tf(eye(8)),tf(eye(2)));
-D_right = append(d0,d0,tf(eye(2)),tf(eye(4)));
+D_left = append(d0*tf(eye(9)),tf(eye(14)));
+D_right = append(d0*tf(eye(9)),tf(eye(6)));
 %
 % START ITERATION.
 %
@@ -99,15 +106,15 @@ N_it = 0;
 while (N_it<10)
 % STEP 2: Compute mu using upper bound:
     %Verifica della robusta stabilità
-    [mubnds,Info] = mussv(Nf(1:2,1:2),[1 1;1 1],'c'); 
+    [mubnds,Info] = mussv(Nf(1:9,1:9),blk,'c'); 
     bodemag(mubnds(1,1),omega);
     murs = norm(mubnds(1,1),inf,1e-6);
     %Verifica della performance nominale
-    [mubnds_pn,Info_np] = mussv(Nf(3:8,3:6),[4 6],'c');
+    [mubnds_pn,Info_np] = mussv(Nf(10:end,10:end),[4 10],'c');
     bodemag(mubnds_pn(1,1),omega);
     munp = norm(mubnds_pn(1,1),inf,1e-6);
     %Verifica della robusta performance
-    [mubnds_rp,Info_rp] = mussv(Nf,[1 1;1 1;4 6],'c');
+    [mubnds_rp,Info_rp] = mussv(Nf,[9 0;4 10],'c');
     bodemag(mubnds_rp(1,1),omega);
     murp = norm(mubnds_rp(1,1),inf,1e-6)
 %   
@@ -125,8 +132,8 @@ while (N_it<10)
 %     func_order_4_p = fitfrd(genphase(dsysl_p(1,1)),4);
 %     func_order_4_p=func_order_4_p.C*(inv(s*eye(4)-func_order_4_p.A))*func_order_4_p.B+func_order_4_p.D; 
 %     D_right=func_order_4_p;
-    D_left = append(d0,d0,tf(eye(10)));
-    D_right = append(d0,d0,tf(eye(6)));
+    D_left = append(d0*tf(eye(9)),tf(eye(14)));
+    D_right = append(d0*tf(eye(9)),tf(eye(6)));
     
      [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
                    'method','lmi','Tolgam',1e-3);

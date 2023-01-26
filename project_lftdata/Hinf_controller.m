@@ -89,7 +89,7 @@ sigma(looptrans.So, 'b'); hold on; sigma(1/WP,'r-.');
 legend('S','gopt/W1'); hold off;
 figure(2);
 sigma(looptrans.To,'r'); hold on; sigma(1/WT,'r-.');
-legend('T','gopt/WT','r-.','location','south'); hold off;
+legend('T','gopt/WT','location','south'); hold off;
 figure(3);
 sigma(Khinf*looptrans.So,'g'); hold on; sigma(1/WU,'g-.');
 legend('KS','gopt/WU'); hold off;
@@ -102,7 +102,7 @@ save('dataset','log_vars');
 omega = logspace(-1,6,100);
 
 % Struttura MDelta
-N = lft(P,Khinf); %funzione di trasferimento tra w e z
+N = lft(P,K); %funzione di trasferimento tra w e z
 Nf = frd(N,omega);%risposta in frequenza di N
 
 M = lft(Delta,N); %Si ottiene la fdt tra udel e ydel
@@ -154,7 +154,7 @@ opt = robopt('Display','on');
 %RP analysis with robgain
 Delta_P = ultidyn('Delta_P', [4 10]);
 delta = blkdiag(Delta, Delta_P);
-N = lft(P, Khinf);
+N = lft(P, K);
 F = lft(delta, N);
 Ff = ufrd(F, omega);
 [perfmarg, destabunc, info] = robgain(Ff, 1, opt)

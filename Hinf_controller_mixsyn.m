@@ -16,13 +16,13 @@ omega = logspace(-1,6,146);
 
 % Funzione di trasferimento incerta
 Gp = C*(s*eye(5)-A_i)^(-1)*B_i; %G incerta
-G_inv = inv(sys'*sys)*sys';%pseudoinversa sinistra
 
 %funzione di trasferiemnto del sistema nominale
 SYS = ss(A,B,C,D);  
 Gnom = minreal(tf(SYS));
 [Anom Bnom Cnom Dnom] = ssdata(Gnom);
 sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
+G_inv = inv(sys'*sys)*sys';%pseudoinversa sinistra
 
 %Peso sulla performance
 M = 2; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema

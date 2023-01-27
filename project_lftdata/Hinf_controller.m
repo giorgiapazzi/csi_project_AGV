@@ -27,7 +27,7 @@ WP = blkdiag(wP,wP,wP,wP);
 
 %Costruzione della WU, peso sullo sforzo di controllo
 wBu = 1;
-WU = 1/10*tf(eye(2));
+WU = 1/20*tf(eye(2));
 
 %Costruzione della WT, peso sul rumore di misura
 wBt = 1;    % frequenza minima di banda per attenuazione di rumore di misura
@@ -108,7 +108,7 @@ omega = logspace(-1,6,100);
 
 % Modificare questa variabile per scegliere su quale controllore fare
 % mu-analisi: Khinf per controllore con hinfsyn o Kmyx per controllore con mixsyn
-K = Khinf;
+K = Kmyx;
 
 % Matrici dinamiche incerte
 % Struttura MDelta
@@ -130,7 +130,6 @@ Nrs = Nf(1:9,1:9);
 [mubnds,muinfo] = mussv(Nrs,blk,'a');
 muRS = mubnds(:,1);
 [muRSinf,muRSw] = norm(muRS,inf);
-semilogx(mubnds(:,1), mubnds(:,2));
 
 % per la performance nominale devo fare un controllo sulla N(2,2)
 % DELTAP è una matrice complessa piena delle stesse dimensioni di F' dove F è lft(N,Delta) = M

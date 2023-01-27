@@ -39,7 +39,7 @@ function j_matrix = get_linearization_lqg()
 %     x5_dot_i = q_ddot_i(2);
 %     f_cont_i = [x1_dot_i x2_dot_i x3_dot_i x4_dot_i x5_dot_i]';  % funzione di transizione di stato
 %     
-    A = simplify(jacobian(f_cont, X));
+    A = simplify(jacobian(f_cont, X))
     B = simplify(jacobian(f_cont, Tau));
     C = simplify(jacobian(h, X));
     D = simplify(jacobian(h, Tau));
@@ -50,11 +50,11 @@ function j_matrix = get_linearization_lqg()
     x_eq = [0 0 -1 0 0];
     tau_eq = [0 0];
     A = double(subs(A, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));                                                                                                                                                                                            
-    A_i = [0, (rp_i), 0, 0, 0;
-           0, 0, 0,-(rp_i), 0;
+    A_i = [0, -(rp_i), 0, 0, 0;
+           0, 0, 0,(rp_i), 0;
            0, 0, 0, 0, 0;
            0, 0, 0, 0, 1;
-           0, 0, 0, 0, (20*(rp_i)*(1150*(rp_i)^2 + 9))/(23000*(rp_i)^2 + 180)];
+           0, 0, 0, 0, -(20*(rp_i)*(1150*(rp_i)^2 + 9))/(23000*(rp_i)^2 + 180)];
  
     B = double(subs(B, [X(1);X(2);X(3);X(4);X(5);Tau(1);Tau(2)], [x_eq'; tau_eq']));
     B_i = [0 0;

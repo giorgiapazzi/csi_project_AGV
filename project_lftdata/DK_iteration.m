@@ -63,9 +63,8 @@ sysic;
 % dove qui al posto della N si ha la P
 nmeas = 4; nu = 2;  
 omega = logspace(-3,3,61);
-M = lft(Delta,P);
-opts = musynOptions('Display','full','MaxIter',3,'TolPerf',0.001,'FrequencyGrid',omega)
-[K_DK,CLPperf,info_mu] = musyn(M,nmeas,nu,opts);
+opts = musynOptions('Display','full','MaxIter',20,'TolPerf',0.001,'FrequencyGrid',omega)
+[K_DK,CLPperf,info_mu] = musyn(P_i,nmeas,nu,opts);
 [A_DK B_DK C_DK D_DK] = ssdata(K_DK);
 
 %Verifica della nominale stabilità

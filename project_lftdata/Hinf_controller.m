@@ -12,9 +12,9 @@ B_i = Jo.B_i; %Matrice B incerta
 %Costruzione della funzione di trasferimento incerta
 %Gp = C*(s*eye(5)-A_i)^(-1)*B_i;
 Gp = ss(A_i,B_i,C,D);
-G_i= minreal(tf(Gp));
-[Ap Bp Cp Dp] = ssdata(G_i);
-Gi = minreal(ss(Ap,Bp,Cp,Dp));
+% G_i= minreal(tf(Gp));
+% [Ap Bp Cp Dp] = ssdata(G_i);
+% Gi = minreal(ss(Ap,Bp,Cp,Dp));
 
 % Definizione dei pesi di performance:
 % Costruzione della WP, peso sulla performance
@@ -42,7 +42,7 @@ Gnom = minreal(tf(SYS));
 sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
 
 
-% Interconnessione
+%Interconnessione
 systemnames = 'Gp WP WU WT';
 inputvar = '[w{4}; u{2}]';
 outputvar = '[WP ; WU; WT; -w-Gp]';
@@ -55,7 +55,17 @@ cleanupsysic = 'yes';
 sysic;
 [P, Delta, blk] = lftdata(P_i); % estrae la matrice certa P e la matrice delle incertezze Delta
 
-
+% systemnames = 'Gp WP ';
+% inputvar = '[w{4}; u{2}]';
+% outputvar = '[WP ; -w-Gp]';
+% input_to_Gp = '[u]';
+% input_to_WP = '[-w-Gp]';
+% %input_to_WU = '[u]';
+% %input_to_WT = '[Gp]';
+% sysoutname = 'P_i';
+% cleanupsysic = 'yes';
+% sysic;
+% [P, Delta, blk] = lftdata(P_i); % estrae la matrice certa P e la matrice delle incertezze Delta
 %% Controllore Hinf con MIXSYN
 
 [Kmyx,ghinf,gopt] = mixsyn(Gp,WP,WU,WT);
@@ -108,7 +118,7 @@ omega = logspace(-1,6,100);
 
 % Modificare questa variabile per scegliere su quale controllore fare
 % mu-analisi: Khinf per controllore con hinfsyn o Kmyx per controllore con mixsyn
-K = Kmyx;
+K = Khinf;
 
 % Matrici dinamiche incerte
 % Struttura MDelta

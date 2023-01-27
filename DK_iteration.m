@@ -16,14 +16,23 @@ SYS = ss(A,B,C,D);    % funzione di trasferiemnto del sistema nominale
 Gnom = minreal(tf(SYS));
 [Anom Bnom Cnom Dnom] = ssdata(Gnom);
 sys = minreal(ss(Anom,Bnom,Cnom,Dnom));
-% autovalori = sigma(T);
-% sigma(T)
 omega = logspace(-1,6,302);
-%
-% Weights.
-%
-rp_tau = w_rp/(rp);
-wi = 5*rp_tau*rp*s/(1+rp*s);
+
+%Funzione di trasferimento incerta
+Gp = C*(s*eye(5)-A_i)^(-1)*B_i; 
+
+%Scelta dei pesi
+% rp_tau = w_rp/(rp);
+% wi = rp_tau*rp*s/(1+rp*s);
+Garray = usample(Gp,50);
+orderWt = 2;
+Garrayg = frd(Garray,logspace(-3,3,60));
+[Usys,Info] = ucover(Garrayg,Gp.NominalValue,orderWt,'in');
+wi = Info.W1; % Funziona con la dk
+sigma(G_inv*(Gp.NominalValue-Garray),'r--'); hold on; sigma(wi)
+
+
+Wi = [wi wi;wi wi];
 
 %sta sopra da 10^-8
 %wi = 1/(1+s*10^8)^3*1/(1+s*10^6)^2*(1+s*10^3)^5*(1+s*10^17)^10*1/(1+s*10^15)^10;
@@ -33,59 +42,37 @@ wi = 5*rp_tau*rp*s/(1+rp*s);
 %muRSinf = 0.1322; muNPinf = 0.0729; muRPinf = 0.2841
 %Non funziona con la dk
 % wi = 1/(1+s*10^10)^2*1/(1+s*10^6)^2*(1+s*10^3)^4*(1+s*10^17)^10*1/(1+s*10^15)^10;
-Gp = C*(s*eye(5)-A_i)^(-1)*B_i; %G incerta
-G_inv = inv(sys'*sys)*sys';%pseudoinversa sinistra
-sigma(G_inv*(Gp-sys),[10^0.5,10^4]); hold on; sigma(wi,[10^0.5,10^4]);
-
-% freq = [1.40494020600125e-14
-% 6.69677303868978e-07
-% 0.249740006959577
-% 2368.13236993714
-% 67387776523264.6];
-% 
-% response = [849.322493224932
-% 504.607046070460
-% 10.2981029810296
-% -93.7669376693768
-% -76.4227642276426];
-% system = frd(10.^(response/20),freq');
-% wi = fitmagfrd(system,4,0);
-% wi = minreal(tf(wi));
 
 
-Wi = blkdiag(wi,wi);
+%Peso sulla performance
 M = 2; %picco massimo di S che da prassi garantisce buoni margini di guadagno sul sistema
 AP = 3; %errore massimo a regime
 wBp = 1; %frequenza minima di banda per la performance
 %wP = (s/(M)^1/2+wBp)^2/(s+wBp*(AP)^1/2)^2; %wp per maggiore pendenza 
-wP = (s/M+wBp)/(s+wBp*AP); %peso sulla performance% Matrici di peso
-Wu = tf(1);  %peso sullo sforzo di controllo
-wBt = 1;
-wT = s/(s+wBt);%peso sul rumore di misura
-WT = blkdiag(wT,wT,wT,wT);
-%Definizione dei parametri
-% M = 2;
-% AP = 10^-2;
-% wBp = 10^-2;
-% wBt = 1;
-% wBu = 1;
-% % Matrici di peso
-% Wu = s/(s+wBu);
-% %wP = (s/M+wBp)/(s+wBp*AP);
-
+wP = (s/M+wBp)/(s+wBp*AP); %peso sulla performance
 WP = blkdiag(wP,wP,wP,wP);
+
+%Peso sulla Wu
+Wu = tf(1);  %peso sullo sforzo di controllo
 WU = blkdiag(Wu,Wu);
+
+%Peso sulla Wt
+wBt = 1;
+wT = s/(s+wBt); %peso sul rumore di misura
+WT = blkdiag(wT,wT,wT,wT);
+
+
 
 
 %% Generalized plant P with Wi, Wu and Wp
-systemnames = 'sys WT WP WU Wi';
+systemnames = 'sys Wi WP WU WT ';
 inputvar = '[udel{2}; w{4}; u{2}]';
-outputvar = '[Wi ; WP ; WU; -w-sys]';
+outputvar = '[Wi ; WP ; WU; WT; -w-sys]';
 input_to_sys = '[u+udel]';
-input_to_WT = '[sys]';
-input_to_WP = '[sys+w]';
+input_to_Wi = '[udel]';
+input_to_WP = '[-sys-w]';
 input_to_WU = '[u]';
-input_to_Wi = '[u]';
+input_to_WT = '[sys]';
 sysoutname = 'P';
 cleanupsysic = 'yes';
 sysic;
@@ -100,6 +87,7 @@ Delta = ultidyn('Delta',[2 2]);
 nmeas = 4; nu = 2;  
 omega = logspace(-1,6,302);
 M=lft(Delta,P);
+
 opts=musynOptions('Display','full','MaxIter',100,'TolPerf',0.001,'FrequencyGrid',omega)
 [K_DK,CLPperf,info_mu]=musyn(M,nmeas,nu,opts);
 

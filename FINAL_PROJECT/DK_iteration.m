@@ -96,13 +96,13 @@ looptrans = loopsens(sys,K_DK);
 %Plot
 figure(1)
 sigma(looptrans.So, 'b'); hold on; sigma(1/WP,'b-.'); 
-legend('S','gopt/W1','location','south'); hold off;
+legend('S','1/WP','location','south'); hold off;
 figure(2)
 sigma(looptrans.To,'r'); hold on; sigma(1/WT,'r-.'); 
-legend('T','gopt/WT'); hold off;
+legend('T','1/WT'); hold off;
 figure(3)
 sigma(K_DK*looptrans.So,'g'); hold on; sigma(1/WU,'g-.'); 
-legend('KS','gopt/WU'); hold off; 
+legend('KS','1/WU'); hold off; 
 % figure(4)
 % sigma(S,'b',K*S,'r',T,'g',gopt/WP,'b-.',gopt/WU,'m-.',gopt/WT,'g-.',{1e-3,1e3})
 % legend('S','KS','T','GAM/W1','GAM/W2','GAM/W3','Location','SouthWest');
@@ -123,6 +123,10 @@ F = lft(Delta,N);   % per performance robusta
 Ff = ufrd(F,omega);
 M = lft(Deltai,N);  % per stabilità robusta
 Mf = ufrd(M,omega);
+
+% Stabilità nominale
+CL = feedback(sys*K_DK,eye(4)); % funzione di trasferimento a ciclo chiuso
+eig(CL)    % per avere stabilità nominale devono essere tutti negativi
 
 % Robusta stabilità
 % stabmarg indica gli upper e lower bound

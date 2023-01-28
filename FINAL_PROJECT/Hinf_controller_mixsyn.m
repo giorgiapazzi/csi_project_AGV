@@ -108,7 +108,7 @@ systemnames = 'sys Wi WP WU WT';
 inputvar = '[udel{2}; w{4}; u{2}]';
 outputvar = '[Wi ; WP ; WU; WT; -w-sys]';
 input_to_sys = '[u+udel]';
-input_to_WP = '[sys]';
+input_to_WP = '[-w-sys]';
 input_to_WU = '[u]';
 input_to_WT = '[sys]';
 input_to_Wi = '[udel]';
@@ -158,7 +158,7 @@ muRP = mubnds(:,1);
 fprintf('\n*****************************************************************************************************\n')
 fprintf('Gli autovalori del sistema sono:')
 eig(feedback(sys*Kmix,eye(4)))
-fprintf('Stabilità robusta muNP: %f \n',muRSinf)
+fprintf('Stabilità robusta muRS: %f \n',muRSinf)
 fprintf('Prestazione nominale muNPinf: %f \n',muNPinf)
 fprintf('Robusta prestazione muRPinf: %f \n',muRPinf)
 fprintf('*****************************************************************************************************\n\n')

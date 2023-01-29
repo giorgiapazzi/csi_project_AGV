@@ -128,9 +128,6 @@ Gpp = sys*(eye(2)+Wi*Delta);%G incerta con incertezza moltiplicativa
 figure(5);
 sigma(Gpp, 'r'); hold on; sigma(sys, 'b');
 
-M = lft(Delta,N); %Si ottiene la fdt tra w e z, è la Fu(N,delta)
-Mf = ufrd(M,omega); %risposta in frequenza
-
 %% RS con mussv
 %osservo autovalori di N per capire se è NS
 eig(N);
@@ -162,15 +159,19 @@ fprintf('Stabilità robusta muRS: %f \n',muRSinf)
 fprintf('Prestazione nominale muNPinf: %f \n',muNPinf)
 fprintf('Robusta prestazione muRPinf: %f \n',muRPinf)
 fprintf('*****************************************************************************************************\n\n')
-%% RS con robuststab
-
+%% RS con robuststab e RP con robustperf
+%RS analysis
 opt = robopt('Display','on');
-
-%for RS with new "robstab" passing the whole  Nf
-% [stabmarg, destabunc, info] = robstab(Mf, opt)
+M = lft(Delta,N); %Si ottiene la fdt tra w e z, è la Fu(N,delta)
+Mf = ufrd(M,omega); %risposta in frequenza
+[stabmarg, destabunc, info] = robstab(Mf, opt)
 
 %RP analysis
-[stabmarg, destabunc, info] = robustperf(Mf, opt)
+Deltap = ultidyn('Deltap',[4 10]);
+delta = blkdiag(Delta,Deltap);
+Mp = lft(delta,N);
+Mpf = ufrd(Mp,omega);
+[stabmarg, destabunc, info] = robustperf(Mpf, opt)
 
 
 

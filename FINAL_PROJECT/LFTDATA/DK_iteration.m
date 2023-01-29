@@ -27,7 +27,7 @@ WP = blkdiag(wP,wP,wP,wP);
 
 %Costruzione della WU, peso sullo sforzo di controllo
 wBu = 1;
-WU = 1/10*tf(eye(2));   % peso sullo sforzo di controllo
+WU = 1/20*tf(eye(2));   % peso sullo sforzo di controllo
 
 %Costruzione della WT, peso sul rumore di misura
 Wt = makeweight(10^-2,20,500);
@@ -58,100 +58,36 @@ sysic;
 
 %% DK-iteration tramite musyn
      
-% Il comando musyn prende la mixed-mu M in ingresso, sapendo che M = lft(delta,N)
-% dove qui al posto della N si ha la P
-nmeas = 4; nu = 2;  
+nmeas = 4; nu = 2;  % numero delle uscite e degli ingressi dell'impianto
 omega = logspace(-3,3,61);
 opts = musynOptions('Display','full','MaxIter',20,'TolPerf',0.001,'FrequencyGrid',omega)
-[K_DK,CLPperf,info_mu] = musyn(P_i,nmeas,nu,opts);
+[K_DK,CLPperf,info_mu] = musyn(P_i,nmeas,nu,opts);  % myxsin si applica direttamente all'impianto incerto
+
+% Per validazione in simulink: dk.slx
 [A_DK B_DK C_DK D_DK] = ssdata(K_DK);
 
 
+%% Analisi delle prestazioni
 %Verifica della nominale stabilità
 N = lft(P,K_DK);
-eig(N);
+eig(N) % Gli autovalori di N devono essere tutti a parte reale negativa
+% In alternativa si possono controllare gli autovalori a ciclo chiuso
+CL = feedback(sys*K_DK,eye(4));
+eig(CL)    % Gli autovalori a ciclo chiuso devono essere tutti a parte reale negativa
 
-
-%% DK ITERATION MANUALE 
-% funzione di interpolazione scelta di ordine 2
-%con la funzione wi di grado 1 funziona bene fino alla quarta iterazione
-%poi si perde ma arriva a muRP<1
-
-% omega = logspace(-3,3,61);
-% nmeas = 4; nu = 2; d0 = 1; 
-% %delta in questo caso è diag{delta_i, delta_p}
-% %delta_i è un blocco diagonale 2x2 ed è per questo che ho [1 1; 1 1];
-% %delta_P invece è una matrice piena (non diagonale)
-% D_left = append(tf(eye(14)));
-% D_right = append(d0,d0,d0,d0,d0,d0,d0,d0,d0,tf(eye(6)));
-% %
-% % START ITERATION.
-% %
-% % STEP 1: Find H-infinity optimal controller
-% % with given scalings:
-% %
-% 
-%     [K,Nsc,gamma,info] = hinfsyn(P_i,nmeas,nu,....
-%                    'method','lmi','Tolgam',1e-3);
-%     
-% 
-%     Nf = frd(lft(P,K),omega);
-% %
-% gamma_prec = gamma+1; 
-% gamma_corr = gamma;
-% N_it = 0;
-% while (N_it<10)
-% % STEP 2: Compute mu using upper bound:
-%     %Verifica della robusta stabilità
-%     [mubnds,Info] = mussv(Nf(1:9,1:9),blk,'c'); 
-%     bodemag(mubnds(1,1),omega);
-%     murs = norm(mubnds(1,1),inf,1e-6);
-%     %Verifica della performance nominale
-%     [mubnds_pn,Info_np] = mussv(Nf(10:end,10:end),[4 10],'c');
-%     bodemag(mubnds_pn(1,1),omega);
-%     munp = norm(mubnds_pn(1,1),inf,1e-6);
-%     %Verifica della robusta performance
-%     [mubnds_rp,Info_rp] = mussv(Nf,[9 0;4 10],'c');
-%     bodemag(mubnds_rp(1,1),omega);
-%     murp = norm(mubnds_rp(1,1),inf,1e-6)
-% %   
-% % STEP 3: Fit resulting D-scales:
-% %
-%     [dsysl,dsysr] = mussvunwrap(Info_rp);
-%     dsysl = dsysl/dsysl(3,3);
-%     func_order_4 = fitfrd(genphase(dsysl(1,1)),1); 
-%     %viene generata la fase interpolando con una funzione del 4° ordine
-%     %func_order_4=func_order_4.C*(inv(s*eye(4)-func_order_4.A))*func_order_4.B+func_order_4.D; 
-%     % poiché viene restituita in forma di stato viene trasfromata in 
-%     % funzione di trasferimento prima di metterla in Dk
-%     d0 = tf(minreal(func_order_4));
-%     
-% %     func_order_4_p = fitfrd(genphase(dsysl_p(1,1)),4);
-% %     func_order_4_p=func_order_4_p.C*(inv(s*eye(4)-func_order_4_p.A))*func_order_4_p.B+func_order_4_p.D; 
-% %     D_right=func_order_4_p;
-%     D_left = append(d0,d0,d0,d0,d0,d0,d0,d0,d0,tf(eye(14)));
-%     D_right = append(d0,d0,d0,d0,d0,d0,d0,d0,d0,tf(eye(6)));
-%     
-%      [K,Nsc,gamma,info] = hinfsyn(D_left*P*inv(D_right),nmeas,nu,....
-%                    'method','lmi','Tolgam',1e-3);
-% 
-%     Nf = frd(lft(P,K),omega);
-% 
-% %     gamma_prec = gamma_corr;
-% %     gamma_corr = gamma;
-%     N_it = N_it+1;
-%   
-% end
-
-%% RS con robstab e RP con robperf
+% RS con robstab e RP con robperf
 opt = robopt('Display','on');
 Delta_P = ultidyn('Delta_P', [4 10]); % Incertezze fittizie
 delta = blkdiag(Delta, Delta_P);    % Matrice delle incertezze finale
+
 F = lft(delta, N);
 Ff = ufrd(F, omega);
 M = lft(Delta,N);   % Si ottiene la fdt tra udel e ydel
 Mf = ufrd(M,omega); % risposta in frequenza
-%for RS with new "robstab" passing the whole  Nf
+
+% Robusta stabilità
 [stabmarg, destabunc, info] = robstab(Mf, opt)
-% Con robustperf
+
+% Robusta prestazione
 [stabmarg, destabunc, info] = robustperf(Ff, opt)
+

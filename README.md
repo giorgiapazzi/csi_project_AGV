@@ -21,6 +21,6 @@ Execute the script "DK_iteration.m" to design an H-infinite controller with DK-i
 
 Inside the LFTDATA folder:
 
-Execute the script "Hinf_controller_Hinf.m" and "Hinf_controller_mixsyn.m" to design a H-infinite controller with two differente methods. For the simulation execute the simulink model "mixed_sensitivityhinf.slx" for linearized system.
+Execute the script "Hinf_controller_Hinf.m" and "Hinf_controller_mixsyn.m" to design a H-infinite controller with two differente methods. For the simulation execute the simulink model "mixed_sensitivityhinf.slx" for linearized system and the simulink model "mixed_sensitivity_nonlin.m" for non linear system.
 
 Execute the script "DK_iteration.m" to design an H-infinite controller with DK-iteration. For the simulation execute the simulink model "dk.slx" for linearized system and the simulink model "dk_nonlin.m" for non linear system.

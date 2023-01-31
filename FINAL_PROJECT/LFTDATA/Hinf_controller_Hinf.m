@@ -122,6 +122,8 @@ muRP = mubnds(:,1);
 % Per controllare tali proprietà di robustezza stampiamo i valori muNpinf,
 % muRSinf, muRPinf (devono essere tutti minori di 1 per avere buono risultati):
 fprintf('\n*****************************************************************************************************\n')
+fprintf('Gli autovalori del sistema sono:')
+eig(feedback(sys*K,eye(4)))
 fprintf('Stabilità robusta muRS: %f \n',muRSinf)
 fprintf('Prestazione nominale muNPinf: %f \n',muNPinf)
 fprintf('Robusta prestazione muRPinf: %f \n',muRPinf)

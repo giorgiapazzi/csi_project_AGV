@@ -73,6 +73,7 @@ N = lft(P,K_DK);
 eig(N) % Gli autovalori di N devono essere tutti a parte reale negativa
 % In alternativa si possono controllare gli autovalori a ciclo chiuso
 CL = feedback(sys*K_DK,eye(4));
+fprintf('Gli autovalori del sistema sono:')
 eig(CL)    % Gli autovalori a ciclo chiuso devono essere tutti a parte reale negativa
 
 % RS con robstab e RP con robperf
